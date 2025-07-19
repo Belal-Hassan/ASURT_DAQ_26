@@ -1,0 +1,15 @@
+/Debug/
+/Release/
+/build/
+*.o
+*.d
+*.elf
+*.bin
+*.hex
+*.map
+*.log
+/.settings/
+/.vscode/
+.cproject
+.project
+*.launch
