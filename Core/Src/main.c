@@ -56,7 +56,6 @@
 /* USER CODE BEGIN PV */
 daq_timestamp_t g_timestamp;
 extern DMA_HandleTypeDef hdma_tim3_ch1_trig, hdma_tim3_ch2, hdma_tim3_ch3, hdma_tim3_ch4_up;
-
 bool g_i2c_dma_flags[DAQ_NO_OF_I2C_DMA_DEVICES];
 daq_i2c_dma_devices_t g_i2c_dma_device = I2C_DMA_NO_DEVICE;
 BaseType_t task_returns[DAQ_NO_OF_TASKS];

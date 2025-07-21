@@ -85,7 +85,6 @@ void IMU_GetVector(imu_vector_type_t vector_type , float* xyz)
     xyz[2] = ((float)z) / 100.0;
     break;
   }
-
 }
 
 /*========================External Functions========================*/
@@ -127,25 +126,23 @@ void IMU_Init(I2C_HandleTypeDef* hi2c, imu_opmode_t mode, imu_axis_map_t map)
 		return;
 
 	// Set to normal power mode
-	Data = POWER_MODE_NORMAL;
-	IMU_WriteData(BNO055_PWR_MODE_ADDR, Data);
+	IMU_WriteData(BNO055_PWR_MODE_ADDR, POWER_MODE_NORMAL);
 	HAL_Delay(10);
 
 	// Switch to register page 1
 	IMU_SelectRegPage(1);
 	// Set acceleration max to 16g.
-	Data = 0x0C | BNO055_MAX_ACCELERATION_16G; // 0x0C is for power mode & bandwidth.
-	IMU_WriteData(ACCEL_CONFIG, Data);
+	IMU_WriteData(ACCEL_CONFIG, BNO055_MAX_ACCELERATION_16G);
 	HAL_Delay(10);
 	// Switch to register page 0
 	IMU_SelectRegPage(0);
 
+	// Remap axes
+	IMU_SetAxisMap(map);
+
 	// Set operating mode
 	IMU_SetMode(mode);
 	HAL_Delay(20);
-
-	// Remap axes
-	IMU_SetAxisMap(map);
 }
 void IMU_Task(void*pvParameters)
 {
