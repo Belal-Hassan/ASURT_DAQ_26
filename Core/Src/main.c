@@ -57,15 +57,15 @@
 daq_timestamp_t g_timestamp;
 extern DMA_HandleTypeDef hdma_tim3_ch1_trig, hdma_tim3_ch2, hdma_tim3_ch3, hdma_tim3_ch4_up;
 
-bool i2c_dma_flags[DAQ_NO_OF_I2C_DMA_DEVICES];
-daq_i2c_dma_devices_t i2c_dma_device = I2C_DMA_NO_DEVICE;
+bool g_i2c_dma_flags[DAQ_NO_OF_I2C_DMA_DEVICES];
+daq_i2c_dma_devices_t g_i2c_dma_device = I2C_DMA_NO_DEVICE;
 BaseType_t task_returns[DAQ_NO_OF_TASKS];
 TaskHandle_t* task_handles[DAQ_NO_OF_TASKS];
-SemaphoreHandle_t i2c_mutex;
+SemaphoreHandle_t g_i2c_mutex;
 CAN_TxHeaderTypeDef can_tx_header;
 DMA_HandleTypeDef *proximity_dma_handlers[4] = {&hdma_tim3_ch1_trig, &hdma_tim3_ch2, &hdma_tim3_ch3, &hdma_tim3_ch4_up};
 
-adafruit_bno055_axis_map_t imu_axis_map = {
+imu_axis_map_t imu_axis_map = {
   .x = BNO055_AXIS_X,
   .x_sign = BNO055_AXIS_SIGN_POSITIVE,
   .y = BNO055_AXIS_Y,
@@ -79,7 +79,6 @@ adafruit_bno055_axis_map_t imu_axis_map = {
 void SystemClock_Config(void);
 /* USER CODE BEGIN PFP */
 void Task1Blink(void *pvParameters);
-void IMU_Task(void*pvParameters);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -123,8 +122,8 @@ int main(void)
   MX_SPI1_Init();
   MX_TIM3_Init();
   /* USER CODE BEGIN 2 */
-  i2c_mutex  = xSemaphoreCreateMutex();
-  if (i2c_mutex == NULL)
+  g_i2c_mutex  = xSemaphoreCreateMutex();
+  if (g_i2c_mutex == NULL)
 	  Error_Handler();
   ADC_Sensors_Init(&hadc1);
   Prox_Init(&htim3, proximity_dma_handlers);
@@ -213,10 +212,10 @@ void Task1Blink(void *pvParameters)
 
 void HAL_I2C_MasterRxCpltCallback(I2C_HandleTypeDef *hi2c)
 {
-	if(!(i2c_dma_flags[i2c_dma_device]) && i2c_dma_device != I2C_DMA_NO_DEVICE)
+	if(!(g_i2c_dma_flags[g_i2c_dma_device]) && g_i2c_dma_device != I2C_DMA_NO_DEVICE)
 	{
-		i2c_dma_flags[i2c_dma_device] = true;
-		i2c_dma_device = I2C_DMA_NO_DEVICE;
+		g_i2c_dma_flags[g_i2c_dma_device] = true;
+		g_i2c_dma_device = I2C_DMA_NO_DEVICE;
 	}
 }
 /* USER CODE END 4 */
@@ -234,7 +233,8 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
   /* USER CODE BEGIN Callback 0 */
 
   /* USER CODE END Callback 0 */
-  if (htim->Instance == TIM7) {
+  if (htim->Instance == TIM7)
+  {
     HAL_IncTick();
   }
   /* USER CODE BEGIN Callback 1 */
@@ -276,8 +276,7 @@ void Error_Handler(void)
   }
   /* USER CODE END Error_Handler_Debug */
 }
-
-#ifdef  USE_FULL_ASSERT
+#ifdef USE_FULL_ASSERT
 /**
   * @brief  Reports the name of the source file and the source line number
   *         where the assert_param error has occurred.

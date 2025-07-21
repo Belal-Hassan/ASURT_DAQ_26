@@ -9,13 +9,15 @@
 #define GPS_INC_GPS_H_
 
 #include "main.h"
+#include <ctype.h>
 #include <string.h>
 #include <stdlib.h>
 #include <math.h>
 #include <stdio.h>
 #include "DAQ.h"
 
-#define UBLOX_I2C_ADDRESS (0x42 << 1)
+#define GPS_I2C_ADDRESS DAQ_GPS_I2C_ADDRESS
+
 typedef struct {
     char time[11];      // HHMMSS.ss
     char status;        // A = valid, V = invalid
@@ -23,17 +25,11 @@ typedef struct {
     char lat_dir;       // N/S
     double longitude;   // Degrees
     char lon_dir;       // E/W
-    //double speed;       // Knots
-    //char date[7];       // DDMMYY
 } gps_gnrmc_data_t;
 void GPS_Init(I2C_HandleTypeDef *hi2c);
-void GPS_Read_GNRMC(I2C_HandleTypeDef *hi2c);
-void GPS_Parse_GNRMC(gps_gnrmc_data_t *data);
+void GPS_ReadGNRMC(I2C_HandleTypeDef *hi2c);
+void GPS_ParseGNRMC(gps_gnrmc_data_t *data);
 void GPS_Task(void * pvParameters);
-//void GPS_sendGPSData(UART_HandleTypeDef *huart, GNRMC_Data *data);
-//void sendUART(UART_HandleTypeDef *huart, const char *message) ;
-double convertToDegrees(char *rawValue);
-double my_atof(const char *str);
 
 
 #endif /* GPS_INC_GPS_H_ */

@@ -6,30 +6,60 @@
  */
 #include "GPS.h"
 
-extern SemaphoreHandle_t i2c_mutex;
-extern daq_i2c_dma_devices_t i2c_dma_device;
-extern bool i2c_dma_flags[DAQ_NO_OF_I2C_DMA_DEVICES];
-static char gps_i2c_buffer[45];
+extern SemaphoreHandle_t g_i2c_mutex;
+extern daq_i2c_dma_devices_t g_i2c_dma_device;
+extern bool g_i2c_dma_flags[DAQ_NO_OF_I2C_DMA_DEVICES];
+char gps_i2c_buffer[45];
 gps_gnrmc_data_t gps_data;
-I2C_HandleTypeDef* gps_hi2c;
+static I2C_HandleTypeDef* gps_hi2c;
 
+/*=================Static functions declerations====================*/
+static double my_atof(const char *str)
+{
+    double result = 0.0;
+    double fraction = 1.0;
+    int sign = 1;
+
+    while (isdigit(*str))
+    {
+        result = result * 10.0 + (*str - '0');
+        str++;
+    }
+
+    if (*str == '.')
+    {
+        str++;
+        while (isdigit(*str))
+        {
+            fraction /= 10.0;
+            result += (*str - '0') * fraction;
+            str++;
+        }
+    }
+
+    return result * sign;
+}
+static double convertToDegrees(char *rawValue)
+{
+    double val = my_atof(rawValue);
+    int deg = (int)(val / 100.0);
+    double min = val - (deg * 100.0);
+    return deg + (min / 60.0);
+}
 void GPS_Init(I2C_HandleTypeDef *hi2c)
 {
 	gps_hi2c = hi2c;
 }
-void GPS_Read_GNRMC(I2C_HandleTypeDef *hi2c)
+void GPS_ReadGNRMC(I2C_HandleTypeDef *hi2c)
 {
-	if(i2c_dma_device == I2C_DMA_NO_DEVICE)
+	if(g_i2c_dma_device == I2C_DMA_NO_DEVICE)
 	{
-		i2c_dma_device = I2C_DMA_GPS;
-		HAL_I2C_Master_Receive_IT(hi2c, UBLOX_I2C_ADDRESS, gps_i2c_buffer, sizeof(gps_i2c_buffer));
+		g_i2c_dma_device = I2C_DMA_GPS;
+		HAL_I2C_Master_Receive_IT(hi2c, GPS_I2C_ADDRESS, gps_i2c_buffer, sizeof(gps_i2c_buffer));
 	}
 }
-
-void GPS_Parse_GNRMC(gps_gnrmc_data_t *data) {
-    //char temp[120];
-    //strcpy(temp, sentence);
-
+void GPS_ParseGNRMC(gps_gnrmc_data_t *data)
+{
     char *token = strtok(gps_i2c_buffer, ",");
     int field = 0;
     if (strcmp(token, "$GNRMC") != 0)
@@ -58,15 +88,15 @@ void GPS_Task(void *pvParameters)
 	xLastWakeTime = xTaskGetTickCount();
     while (1)
     {
-        if (xSemaphoreTake(i2c_mutex, pdMS_TO_TICKS(100)) == pdTRUE)
+        if (xSemaphoreTake(g_i2c_mutex, pdMS_TO_TICKS(100)) == pdTRUE)
         {
-            GPS_Read_GNRMC(gps_hi2c);
-            xSemaphoreGive(i2c_mutex);
+            GPS_ReadGNRMC(gps_hi2c);
+            xSemaphoreGive(g_i2c_mutex);
         }
-        if(i2c_dma_flags[I2C_DMA_GPS])
+        if(g_i2c_dma_flags[I2C_DMA_GPS])
         {
-        	i2c_dma_flags[I2C_DMA_GPS] = 0;
-        	GPS_Parse_GNRMC(&gps_data);
+        	g_i2c_dma_flags[I2C_DMA_GPS] = 0;
+        	GPS_ParseGNRMC(&gps_data);
         	// If valid GPS data received
         	if (gps_data.status == 'A')
         	{
@@ -89,74 +119,4 @@ void GPS_Task(void *pvParameters)
         }
         vTaskDelayUntil(&xLastWakeTime, 11);
     }
-}
-
-
-
-/*void GPS_sendgps_data(UART_HandleTypeDef *huart, GNRMC_Data *data) {
-    char gps_i2c_buffer[128];
-    //HAL_Delay(100);
-    sprintf(gps_i2c_buffer, "Time: %s\r\n", data->time);
-    sendUART(huart, gps_i2c_buffer);
-    //HAL_Delay(100);
-    sprintf(gps_i2c_buffer, "Status: %c\r\n", data->status);
-    sendUART(huart, gps_i2c_buffer);
-    //HAL_Delay(100);
-    sprintf(gps_i2c_buffer, "Latitude: %.6f %c\r\n", data->latitude, data->lat_dir);
-    sendUART(huart, gps_i2c_buffer);
-    //HAL_Delay(100);
-    sprintf(gps_i2c_buffer, "Longitude: %.6f %c\r\n", data->longitude, data->lon_dir);
-    sendUART(huart, gps_i2c_buffer);
-    //HAL_Delay(100);
-    sprintf(gps_i2c_buffer, "Speed: %.2f Knots\r\n", data->speed);
-    sendUART(huart, gps_i2c_buffer);
-   // HAL_Delay(100);
-    sprintf(gps_i2c_buffer, "Date: %s\r\n", data->date);
-    sendUART(huart, gps_i2c_buffer);
-   // HAL_Delay(100);
-}*/
-
-
-/*void sendUART(UART_HandleTypeDef *huart, const char *message) {
-
-    HAL_UART_Transmit(huart, (uint8_t *)message, strlen(message), HAL_MAX_DELAY);
-}*/
-
-
-
-
-
-
-
-
-
-
-
-double convertToDegrees(char *rawValue) {
-    double val = my_atof(rawValue);
-    int deg = (int)(val / 100.0);
-    double min = val - (deg * 100.0);
-    return deg + (min / 60.0);
-}
-
-double my_atof(const char *str) {
-    double result = 0.0;
-    double fraction = 1.0;
-    int sign = 1;
-
-    while (isdigit(*str)) {
-        result = result * 10.0 + (*str - '0');
-        str++;
-    }
-
-    if (*str == '.') {
-        str++;
-        while (isdigit(*str)) {
-            fraction /= 10.0;
-            result += (*str - '0') * fraction;
-            str++;
-        }
-    }
-
-    return result * sign;
 }

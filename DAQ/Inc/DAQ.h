@@ -18,7 +18,7 @@
 #include "stm32f446xx.h"
 #include "stm32f4xx_hal.h"
 
-#define DAQ_Check_Change(currentData, prevData, minChange) (fabs(currentData - prevData) >= minChange)
+#define DAQ_CheckChange(current_data, prev_data, min_change) (fabs(current_data - prev_data) >= min_change)
 
 /* CAN */
 
@@ -84,7 +84,7 @@ typedef struct
 
     uint64_t encoder_angle 	: 10;
     uint64_t Speedkmh 		: 8;
-} daq_can_msg_proximity_t;
+} daq_can_msg_prox_t;
 /**
  * @brief Format for the message from GPS to be included in a COMM_can_message_t object.
  * Contains latitude and longitude as floats in decimal format.
@@ -115,11 +115,12 @@ typedef struct
  */
 typedef enum
 {
-	DAQ_CAN_ID_IMU = DAQ_CAN_BASE_ID,
+	DAQ_CAN_ID_IMU_ANGLE = DAQ_CAN_BASE_ID,
+	DAQ_CAN_ID_IMU_ACCEL,
 	DAQ_CAN_ID_ADC,
 	DAQ_CAN_ID_PROX_ENCODER,
 	DAQ_CAN_ID_GPS,
-	DAQ_CAN_ID_TEMPERATURE,
+	DAQ_CAN_ID_TEMP,
 } daq_can_id_t;
 
 typedef struct{

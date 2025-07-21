@@ -10,7 +10,12 @@
 
 #include "main.h"
 #include "DAQ.h"
-#include "Temperature_Config.h"
+
+#define TEMP_I2C_BASE_ADDRESS		DAQ_TEMP_I2C_BASE_ADDRESS
+#define TEMP_I2C_ADDRESS_SPACING 	DAQ_TEMP_I2C_ADDRESS_SPACING
+#define TEMP_NO_OF_SENSORS			DAQ_NO_OF_TEMP_SENSORS
+// Moving average parameters
+#define MOVING_AVG_WINDOW_SIZE 		5
 
 typedef enum{
 	TEMP_FRONT_LEFT,
@@ -32,13 +37,17 @@ typedef struct{
 	float temperature;
 }temp_sensor_data_t;
 
+typedef struct{
+	float prev[TEMP_NO_OF_SENSORS];
+	float current[TEMP_NO_OF_SENSORS];
+}temp_readings_t;
 
-void MLX90614_Read_Data(uint8_t sensor_index);
-float MLX90614_Process_Temp(uint8_t sensor_index);
+
 float Moving_Avg(float next_num, uint8_t sensor_index);
+void Temp_ReadRaw(uint8_t sensor_index);
+float Temp_Process(uint8_t sensor_index);
 void Temp_Init(I2C_HandleTypeDef * hi2c);
 void Temp_Task(void *pvParameters);
-void float_to_string(float number, char *str, int precision);
 
 
 #endif /* TEMPERATURE_INC_TEMPERATURE_H_ */

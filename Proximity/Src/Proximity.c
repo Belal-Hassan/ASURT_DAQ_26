@@ -5,11 +5,9 @@
 #include "proximity.h"
 
 uint16_t prox_dma_buffer[4][16];
-double prox_wheel_rpms[4];
+prox_rpms_t prox_wheel_rpms;
 static TIM_HandleTypeDef prox_timer_handle;
 static DMA_HandleTypeDef prox_dma_handles[4];
-
-// TODO: fix 1 and 3.
 static uint32_t timer_counters[4] = {&TIM3->CCR1, &TIM3->CCR2, &TIM3->CCR3, &TIM3->CCR4};
 
 
@@ -25,12 +23,7 @@ void Prox_Init(TIM_HandleTypeDef *htim, DMA_HandleTypeDef* hdma[4])
 }
 void Prox_Task(void *pvParameters)
 {
-	daq_can_msg_t can_msg_proximity = {};
-	daq_can_msg_proximity_t encoder_msg_proximity = {};
     uint8_t slow_counter[4] = {0, 0, 0, 0};
-
-    can_msg_proximity.id = DAQ_CAN_ID_PROX_ENCODER;
-    can_msg_proximity.size = 8;
     while (1)
     {
         vTaskDelay(10);
@@ -47,7 +40,7 @@ void Prox_Task(void *pvParameters)
                 slow_counter[wheel_no] = 0; // Reset the corresponding slow_counter
                 // Calculate the speed.
                 uint16_t difference = prox_dma_buffer[wheel_no][last_reading_index - 1] - prox_dma_buffer[wheel_no][last_reading_index - 2];
-                prox_wheel_rpms[wheel_no] = 0.25 * 60 * (PROX_TIMER_FREQ / difference);
+                prox_wheel_rpms.current[wheel_no] = 0.25 * 60 * (PROX_TIMER_FREQ / difference);
 
                 // Pause DMA.
                 HAL_DMA_Abort(&prox_dma_handles[wheel_no]);
@@ -67,7 +60,7 @@ void Prox_Task(void *pvParameters)
                     slow_counter[wheel_no]++; // Increment the corresponding slow_counter
                 else
                 { // The car is at rest.
-                    prox_wheel_rpms[wheel_no] = 0;
+                    prox_wheel_rpms.current[wheel_no] = 0;
                     slow_counter[wheel_no] = 0; // Reset the corresponding slow_counter
 
                     // Pause DMA.
@@ -84,13 +77,27 @@ void Prox_Task(void *pvParameters)
                 }
             }
         }
-        encoder_msg_proximity.rpm_front_left  = (uint64_t)prox_wheel_rpms[FRONT_LEFT_BUFF];
-        encoder_msg_proximity.rpm_front_right = (uint64_t)prox_wheel_rpms[FRONT_RIGHT_BUFF];
-        encoder_msg_proximity.rpm_rear_left   = (uint64_t)prox_wheel_rpms[REAR_LEFT_BUFF];
-        encoder_msg_proximity.rpm_rear_right  = (uint64_t)prox_wheel_rpms[REAR_RIGHT_BUFF];
-        //encoder_msg_proximity.ENCODER_angle = (uint64_t)ENCODER_get_angle();
-        encoder_msg_proximity.Speedkmh = (uint64_t) PROX_CALCULATE_SPEED(prox_wheel_rpms[FRONT_LEFT_BUFF], prox_wheel_rpms[FRONT_RIGHT_BUFF]);
-        can_msg_proximity.data = *((uint64_t*)&encoder_msg_proximity);
-        DAQ_CAN_Msg_Enqueue(&can_msg_proximity);
+        if(DAQ_CheckChange(prox_wheel_rpms.current[FRONT_LEFT_BUFF], prox_wheel_rpms.prev[FRONT_LEFT_BUFF], DAQ_MIN_CHANGE_PROX_RPM) ||
+           DAQ_CheckChange(prox_wheel_rpms.current[FRONT_RIGHT_BUFF], prox_wheel_rpms.prev[FRONT_RIGHT_BUFF], DAQ_MIN_CHANGE_PROX_RPM) ||
+		   DAQ_CheckChange(prox_wheel_rpms.current[REAR_LEFT_BUFF], prox_wheel_rpms.prev[REAR_LEFT_BUFF], DAQ_MIN_CHANGE_PROX_RPM) ||
+		   DAQ_CheckChange(prox_wheel_rpms.current[REAR_RIGHT_BUFF], prox_wheel_rpms.prev[REAR_RIGHT_BUFF], DAQ_MIN_CHANGE_PROX_RPM))
+        {
+        	daq_can_msg_t can_msg_prox = {};
+        	daq_can_msg_prox_t encoder_msg_prox = {};
+        	can_msg_prox.id = DAQ_CAN_ID_PROX_ENCODER;
+        	can_msg_prox.size = 8;
+        	encoder_msg_prox.rpm_front_left  = (uint64_t)prox_wheel_rpms.current[FRONT_LEFT_BUFF];
+        	encoder_msg_prox.rpm_front_right = (uint64_t)prox_wheel_rpms.current[FRONT_RIGHT_BUFF];
+        	encoder_msg_prox.rpm_rear_left   = (uint64_t)prox_wheel_rpms.current[REAR_LEFT_BUFF];
+        	encoder_msg_prox.rpm_rear_right  = (uint64_t)prox_wheel_rpms.current[REAR_RIGHT_BUFF];
+        	//encoder_msg_prox.ENCODER_angle = (uint64_t)ENCODER_get_angle();
+        	encoder_msg_prox.Speedkmh = (uint64_t) PROX_CALCULATE_SPEED(prox_wheel_rpms.current[FRONT_LEFT_BUFF], prox_wheel_rpms.current[FRONT_RIGHT_BUFF]);
+        	can_msg_prox.data = *((uint64_t*)&encoder_msg_prox);
+        	DAQ_CAN_Msg_Enqueue(&can_msg_prox);
+        	prox_wheel_rpms.prev[FRONT_LEFT_BUFF]  = prox_wheel_rpms.current[FRONT_LEFT_BUFF];
+        	prox_wheel_rpms.prev[FRONT_RIGHT_BUFF] = prox_wheel_rpms.current[FRONT_RIGHT_BUFF];
+        	prox_wheel_rpms.prev[REAR_LEFT_BUFF]   = prox_wheel_rpms.current[REAR_LEFT_BUFF];
+        	prox_wheel_rpms.prev[REAR_RIGHT_BUFF]  = prox_wheel_rpms.current[REAR_RIGHT_BUFF];
+        }
     }
 }

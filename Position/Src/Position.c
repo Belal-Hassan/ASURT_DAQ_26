@@ -11,7 +11,6 @@ volatile uint16_t adc_raw_values[DAQ_NO_OF_ADC_SENSORS] = {0,0,0,0,0,0};
 adc_readings_t adc_readings;
 
 
-
 void Median_Init(median_filter_t* this, uint16_t* buffer, uint16_t** pt_buffer_sorted, uint16_t size)
 {
     if (this == NULL)
@@ -157,19 +156,18 @@ void ADC_Sensors_Process(volatile uint16_t *raw_adc_values)
 void ADC_Task(void *pvParameters)
 {
 	TickType_t xLastWakeTime;
-	// Initialise the xLastWakeTime variable with the current time.
     xLastWakeTime = xTaskGetTickCount();
 	for( ;; )
     {
 		ADC_Sensors_Process(adc_raw_values);
 		for(uint8_t i = 0; i < DAQ_NO_OF_ADC_SENSORS; i++)
 			adc_readings.current[i] = adc_filters[i].filtered_value;
-		if(DAQ_Check_Change(adc_readings.current[0], adc_readings.prev[0], DAQ_MIN_CHANGE_SUSPENSION) ||
-		   DAQ_Check_Change(adc_readings.current[1], adc_readings.prev[1], DAQ_MIN_CHANGE_SUSPENSION) ||
-		   DAQ_Check_Change(adc_readings.current[2], adc_readings.prev[2], DAQ_MIN_CHANGE_SUSPENSION) ||
-		   DAQ_Check_Change(adc_readings.current[3], adc_readings.prev[3], DAQ_MIN_CHANGE_SUSPENSION) ||
-		   DAQ_Check_Change(adc_readings.current[4], adc_readings.prev[4], DAQ_MIN_CHANGE_PRESSURE) 	||
-		   DAQ_Check_Change(adc_readings.current[5], adc_readings.prev[5], DAQ_MIN_CHANGE_PRESSURE))
+		if(DAQ_CheckChange(adc_readings.current[SUSPENSION_FRONT_LEFT], adc_readings.prev[SUSPENSION_FRONT_LEFT], 	DAQ_MIN_CHANGE_SUSPENSION) ||
+		   DAQ_CheckChange(adc_readings.current[SUSPENSION_FRONT_RIGHT],adc_readings.prev[SUSPENSION_FRONT_RIGHT], 	DAQ_MIN_CHANGE_SUSPENSION) ||
+		   DAQ_CheckChange(adc_readings.current[SUSPENSION_REAR_LEFT], 	adc_readings.prev[SUSPENSION_REAR_LEFT],	DAQ_MIN_CHANGE_SUSPENSION) ||
+		   DAQ_CheckChange(adc_readings.current[SUSPENSION_REAR_RIGHT], adc_readings.prev[SUSPENSION_REAR_RIGHT],	DAQ_MIN_CHANGE_SUSPENSION) ||
+		   DAQ_CheckChange(adc_readings.current[PRESSURE_REAR_LEFT], 	adc_readings.prev[PRESSURE_REAR_LEFT], 		DAQ_MIN_CHANGE_PRESSURE)   ||
+		   DAQ_CheckChange(adc_readings.current[PRESSURE_REAR_RIGHT], 	adc_readings.prev[PRESSURE_REAR_RIGHT], 	DAQ_MIN_CHANGE_PRESSURE))
 		{
 			daq_can_msg_t can_msg_adc = {};
 			daq_can_msg_adc_t encoder_msg_adc = {};
@@ -182,13 +180,10 @@ void ADC_Task(void *pvParameters)
 			can_msg_adc.id = DAQ_CAN_ID_ADC;
 			can_msg_adc.data = *((uint64_t*)(&encoder_msg_adc));
 			can_msg_adc.size = 8;
-
 			DAQ_CAN_Msg_Enqueue(&can_msg_adc);
-
 			for(uint8_t i = 0; i < DAQ_NO_OF_ADC_SENSORS; i++)
 				adc_readings.prev[i] = adc_readings.current[i];
 		}
-		//a2 = uxTaskGetStackHighWaterMark(NULL);
 		vTaskDelayUntil(&xLastWakeTime, 7);
 	}
 }
