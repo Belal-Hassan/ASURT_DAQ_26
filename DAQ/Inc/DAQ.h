@@ -33,7 +33,8 @@ typedef enum {
 	IMU_TASK,
 	GPS_TASK,
 	TEMP_TASK,
-	CAN_TASK
+	CAN_TASK,
+	WWDG_TASK
 }daq_task_handles_t;
 /**
  * @brief Message to be enqueued in the CAN queue.

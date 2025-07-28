@@ -4,34 +4,41 @@
 
 #include "proximity.h"
 
-uint16_t prox_dma_buffer[4][16];
+uint16_t prox_dma_buffer[PROX_NO_OF_WHEELS][PROX_DMA_WHEEL_BUFFER_SIZE];
 prox_rpms_t prox_wheel_rpms;
 static TIM_HandleTypeDef prox_timer_handle;
-static DMA_HandleTypeDef prox_dma_handles[4];
-static uint32_t timer_counters[4] = {&TIM3->CCR1, &TIM3->CCR2, &TIM3->CCR3, &TIM3->CCR4};
+static DMA_HandleTypeDef prox_dma_handles[PROX_NO_OF_WHEELS];
+static uint32_t timer_counters[PROX_NO_OF_WHEELS] = {&TIM3->CCR1, &TIM3->CCR2, &TIM3->CCR3, &TIM3->CCR4};
 
 
-void Prox_Init(TIM_HandleTypeDef *htim, DMA_HandleTypeDef* hdma[4])
+static inline float Prox_GetTimerFreq(void)
+{
+    float pclk1 = (float)HAL_RCC_GetPCLK1Freq();
+    if ((RCC->CFGR & RCC_CFGR_PPRE1) != RCC_CFGR_PPRE1_DIV1)
+        pclk1 *= 2.0f;
+    return pclk1 / ((float)TIM3->PSC + 1.0f);
+}
+void Prox_Init(TIM_HandleTypeDef *htim, DMA_HandleTypeDef* hdma[PROX_NO_OF_WHEELS])
 {
     prox_timer_handle = *htim;
-    for (int i = 0; i < 4; i++)
+    for (uint8_t i = 0; i < PROX_NO_OF_WHEELS; i++)
         prox_dma_handles[i] = *hdma[i];
-    HAL_TIM_IC_Start_DMA(htim, TIM_CHANNEL_1, &prox_dma_buffer[FRONT_LEFT_BUFF], 16);
-    HAL_TIM_IC_Start_DMA(htim, TIM_CHANNEL_2, &prox_dma_buffer[FRONT_RIGHT_BUFF], 16);
-    HAL_TIM_IC_Start_DMA(htim, TIM_CHANNEL_3, &prox_dma_buffer[REAR_LEFT_BUFF], 16);
-    HAL_TIM_IC_Start_DMA(htim, TIM_CHANNEL_4, &prox_dma_buffer[REAR_RIGHT_BUFF], 16);
+    HAL_TIM_IC_Start_DMA(htim, TIM_CHANNEL_1, prox_dma_buffer[FRONT_LEFT_BUFF], PROX_DMA_WHEEL_BUFFER_SIZE);
+    HAL_TIM_IC_Start_DMA(htim, TIM_CHANNEL_2, prox_dma_buffer[FRONT_RIGHT_BUFF], PROX_DMA_WHEEL_BUFFER_SIZE);
+    HAL_TIM_IC_Start_DMA(htim, TIM_CHANNEL_3, prox_dma_buffer[REAR_LEFT_BUFF], PROX_DMA_WHEEL_BUFFER_SIZE);
+    HAL_TIM_IC_Start_DMA(htim, TIM_CHANNEL_4, prox_dma_buffer[REAR_RIGHT_BUFF], PROX_DMA_WHEEL_BUFFER_SIZE);
 }
 void Prox_Task(void *pvParameters)
 {
-    uint8_t slow_counter[4] = {0, 0, 0, 0};
+    uint8_t slow_counter[PROX_NO_OF_WHEELS] = {0, 0, 0, 0};
     while (1)
     {
         vTaskDelay(10);
-        for (int wheel_no = 0; wheel_no < 4; wheel_no++)
+        for (uint8_t wheel_no = 0; wheel_no < PROX_NO_OF_WHEELS; wheel_no++)
         {
-            int last_reading_index = 0;
+            uint8_t last_reading_index = 0;
 
-            for (last_reading_index = 0; last_reading_index < 16; last_reading_index++)
+            for (last_reading_index = 0; last_reading_index < PROX_DMA_WHEEL_BUFFER_SIZE; last_reading_index++)
                 if (prox_dma_buffer[wheel_no][last_reading_index] == 0)
                     break;
             // If the wheel is moving fast.
@@ -40,19 +47,19 @@ void Prox_Task(void *pvParameters)
                 slow_counter[wheel_no] = 0; // Reset the corresponding slow_counter
                 // Calculate the speed.
                 uint16_t difference = prox_dma_buffer[wheel_no][last_reading_index - 1] - prox_dma_buffer[wheel_no][last_reading_index - 2];
-                prox_wheel_rpms.current[wheel_no] = 0.25 * 60 * (PROX_TIMER_FREQ / difference);
+                prox_wheel_rpms.current[wheel_no] = 0.25 * 60 * (Prox_GetTimerFreq() / difference);
 
                 // Pause DMA.
                 HAL_DMA_Abort(&prox_dma_handles[wheel_no]);
 
                 // Erase the array.
-                for (int i = 0; i < 16; i++)
+                for (uint8_t i = 0; i < PROX_DMA_WHEEL_BUFFER_SIZE; i++)
                     prox_dma_buffer[wheel_no][i] = 0;
 
                 // Reset the DMA pointer so that it starts at the beginning of the array.
-                prox_dma_handles[wheel_no].Instance->M0AR = &prox_dma_buffer[wheel_no];
-                prox_dma_handles[wheel_no].Instance->NDTR = 16;
-                HAL_DMA_Start(&prox_dma_handles[wheel_no], timer_counters[wheel_no], &prox_dma_buffer[wheel_no], 16);
+                prox_dma_handles[wheel_no].Instance->M0AR = prox_dma_buffer[wheel_no];
+                prox_dma_handles[wheel_no].Instance->NDTR = PROX_DMA_WHEEL_BUFFER_SIZE;
+                HAL_DMA_Start(&prox_dma_handles[wheel_no], timer_counters[wheel_no], prox_dma_buffer[wheel_no], PROX_DMA_WHEEL_BUFFER_SIZE);
             }
             else
             {
@@ -67,13 +74,13 @@ void Prox_Task(void *pvParameters)
                     HAL_DMA_Abort(&prox_dma_handles[wheel_no]);
 
                     // Erase the array.
-                    for (int i = 0; i < 16; i++)
+                    for (uint8_t i = 0; i < PROX_DMA_WHEEL_BUFFER_SIZE; i++)
                         prox_dma_buffer[wheel_no][i] = 0;
 
                     // Reset the DMA pointer so that it starts at the beginning of the array.
-                    prox_dma_handles[wheel_no].Instance->M0AR = &prox_dma_buffer[wheel_no];
-                    prox_dma_handles[wheel_no].Instance->NDTR = 16;
-                    HAL_DMA_Start(&prox_dma_handles[wheel_no], timer_counters[wheel_no], &prox_dma_buffer[wheel_no], 16);
+                    prox_dma_handles[wheel_no].Instance->M0AR = prox_dma_buffer[wheel_no];
+                    prox_dma_handles[wheel_no].Instance->NDTR = PROX_DMA_WHEEL_BUFFER_SIZE;
+                    HAL_DMA_Start(&prox_dma_handles[wheel_no], timer_counters[wheel_no], prox_dma_buffer[wheel_no], PROX_DMA_WHEEL_BUFFER_SIZE);
                 }
             }
         }
@@ -94,10 +101,8 @@ void Prox_Task(void *pvParameters)
         	encoder_msg_prox.Speedkmh = (uint64_t) PROX_CALCULATE_SPEED(prox_wheel_rpms.current[FRONT_LEFT_BUFF], prox_wheel_rpms.current[FRONT_RIGHT_BUFF]);
         	can_msg_prox.data = *((uint64_t*)&encoder_msg_prox);
         	DAQ_CAN_Msg_Enqueue(&can_msg_prox);
-        	prox_wheel_rpms.prev[FRONT_LEFT_BUFF]  = prox_wheel_rpms.current[FRONT_LEFT_BUFF];
-        	prox_wheel_rpms.prev[FRONT_RIGHT_BUFF] = prox_wheel_rpms.current[FRONT_RIGHT_BUFF];
-        	prox_wheel_rpms.prev[REAR_LEFT_BUFF]   = prox_wheel_rpms.current[REAR_LEFT_BUFF];
-        	prox_wheel_rpms.prev[REAR_RIGHT_BUFF]  = prox_wheel_rpms.current[REAR_RIGHT_BUFF];
+        	for(uint8_t i = 0; i < PROX_NO_OF_WHEELS; i++)
+        		prox_wheel_rpms.prev[i] = prox_wheel_rpms.current[i];
         }
     }
 }

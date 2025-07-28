@@ -14,11 +14,9 @@
 #include "FreeRTOS.h"
 #include "DAQ.h"
 
-#define PROX_TIMER_FREQ ( ((RCC->CFGR & RCC_CFGR_PPRE1) != RCC_CFGR_PPRE1_DIV1) ? \
-                         ((float)HAL_RCC_GetPCLK1Freq() * 2.0f) : \
-                         ((float)HAL_RCC_GetPCLK1Freq()) ) / ((float)TIM3->PSC + 1.0f)
-
 #define PROX_CALCULATE_SPEED(rpm1, rpm2) ((((rpm1 + rpm2) / 2.0) * DAQ_TIRE_CIRCUMFERENCE * 60.0) / 1000.0)
+#define PROX_NO_OF_WHEELS 			4
+#define PROX_DMA_WHEEL_BUFFER_SIZE	12
 
 typedef enum {
     FRONT_LEFT_BUFF,
@@ -28,8 +26,8 @@ typedef enum {
 }wheel_buffer_t;
 
 typedef struct{
-	double prev[4];
-	double current[4];
+	double prev[PROX_NO_OF_WHEELS];
+	double current[PROX_NO_OF_WHEELS];
 }prox_rpms_t;
 
 void Prox_Init(TIM_HandleTypeDef *htim, DMA_HandleTypeDef* hdma[4]);

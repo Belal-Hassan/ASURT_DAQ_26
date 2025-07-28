@@ -55,13 +55,16 @@
 
 /* USER CODE BEGIN PV */
 daq_timestamp_t g_timestamp;
-extern DMA_HandleTypeDef hdma_tim3_ch1_trig, hdma_tim3_ch2, hdma_tim3_ch3, hdma_tim3_ch4_up;
+
+BaseType_t task_returns[DAQ_NO_OF_TASKS];
+TaskHandle_t task_handles[DAQ_NO_OF_TASKS];
+SemaphoreHandle_t g_i2c_mutex;
+
+CAN_TxHeaderTypeDef can_tx_header;
+
 bool g_i2c_dma_flags[DAQ_NO_OF_I2C_DMA_DEVICES];
 daq_i2c_dma_devices_t g_i2c_dma_device = I2C_DMA_NO_DEVICE;
-BaseType_t task_returns[DAQ_NO_OF_TASKS];
-TaskHandle_t* task_handles[DAQ_NO_OF_TASKS];
-SemaphoreHandle_t g_i2c_mutex;
-CAN_TxHeaderTypeDef can_tx_header;
+extern DMA_HandleTypeDef hdma_tim3_ch1_trig, hdma_tim3_ch2, hdma_tim3_ch3, hdma_tim3_ch4_up;
 DMA_HandleTypeDef *proximity_dma_handlers[4] = {&hdma_tim3_ch1_trig, &hdma_tim3_ch2, &hdma_tim3_ch3, &hdma_tim3_ch4_up};
 
 imu_axis_map_t imu_axis_map = {
@@ -132,12 +135,12 @@ int main(void)
   HAL_CAN_Start(&hcan1);
   DAQ_CAN_Init(&hcan1, &can_tx_header);
   xTaskCreate(Task1Blink, "Blink1", 64, NULL, 5, NULL);
-  task_returns[ADC_TASK] = xTaskCreate(ADC_Task		, "ADC_Task" , 2*256 , NULL, 3, task_handles[ADC_TASK]);
-  task_returns[PROX_TASK]= xTaskCreate(Prox_Task	, "Prox_Task", 256	 , NULL, 1, task_handles[PROX_TASK]);
-  task_returns[IMU_TASK] = xTaskCreate(IMU_Task		, "IMU_Task" , 2*256 , NULL, 2, task_handles[IMU_TASK]);
-  task_returns[GPS_TASK] = xTaskCreate(GPS_Task		, "GPS_task" , 256	 , NULL, 3, task_handles[GPS_TASK]);
-  task_returns[TEMP_TASK]= xTaskCreate(Temp_Task 	, "Temp_task", 256 	 , NULL, 4, task_handles[TEMP_TASK]);
-  task_returns[CAN_TASK] = xTaskCreate(DAQ_CAN_Task	, "CAN_task" , 256	 , NULL, 5, task_handles[CAN_TASK]);
+  task_returns[ADC_TASK] = xTaskCreate(ADC_Task		, "ADC_Task" , 2*256 , NULL, 3, &task_handles[ADC_TASK]);
+  task_returns[PROX_TASK]= xTaskCreate(Prox_Task	, "Prox_Task", 256	 , NULL, 1, &task_handles[PROX_TASK]);
+  task_returns[IMU_TASK] = xTaskCreate(IMU_Task		, "IMU_Task" , 2*256 , NULL, 2, &task_handles[IMU_TASK]);
+  task_returns[GPS_TASK] = xTaskCreate(GPS_Task		, "GPS_task" , 256	 , NULL, 3, &task_handles[GPS_TASK]);
+  task_returns[TEMP_TASK]= xTaskCreate(Temp_Task 	, "Temp_task", 256 	 , NULL, 4, &task_handles[TEMP_TASK]);
+  task_returns[CAN_TASK] = xTaskCreate(DAQ_CAN_Task	, "CAN_task" , 256	 , NULL, 5, &task_handles[CAN_TASK]);
   vTaskStartScheduler();
   /* USER CODE END 2 */
 
