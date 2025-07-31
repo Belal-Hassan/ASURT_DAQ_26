@@ -42,6 +42,7 @@ extern "C" {
 #include "queue.h"
 #include "timers.h"
 #include "event_groups.h"
+#include "trcRecorder.h"
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/

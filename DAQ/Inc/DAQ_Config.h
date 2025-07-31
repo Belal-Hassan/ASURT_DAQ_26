@@ -45,4 +45,6 @@
 #define DAQ_ACCURACY_PRESSURE			1000
 #define DAQ_ACCURACY_TEMP 				10
 
+#define DAQ_TRACE_RECORDER // Comment if tracing is not needed
+
 #endif /* DAQ_DAQ_CONFIG_H_ */

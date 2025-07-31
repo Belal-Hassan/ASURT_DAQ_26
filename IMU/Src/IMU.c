@@ -22,7 +22,7 @@ static I2C_HandleTypeDef* GlobalConfig = NULL;
 void IMU_SetMode(imu_opmode_t mode)
 {
   imu_mode = mode;
-  HAL_I2C_Mem_Write(GlobalConfig , IMU_I2C_ADDRESS , BNO055_OPR_MODE_ADDR , 1 , &imu_mode , 1 , HAL_MAX_DELAY);
+  HAL_I2C_Mem_Write(GlobalConfig , IMU_I2C_ADDRESS , BNO055_OPR_MODE_ADDR , 1 , &imu_mode , 1 , 20);
   HAL_Delay(30);
 }
 
@@ -36,7 +36,7 @@ void IMU_GetVector(imu_vector_type_t vector_type , float* xyz)
   x = y = z = 0;
 
   /* Read vector data (6 bytes) */
-  HAL_I2C_Mem_Read(GlobalConfig , IMU_I2C_ADDRESS , (adafruit_bno055_reg_t)vector_type , 1 , buffer , 6 , HAL_MAX_DELAY);
+  HAL_I2C_Mem_Read(GlobalConfig , IMU_I2C_ADDRESS , (adafruit_bno055_reg_t)vector_type , 1 , buffer , 6 , 20);
 
   x = ((int16_t)buffer[0]) | (((int16_t)buffer[1]) << 8);
   y = ((int16_t)buffer[2]) | (((int16_t)buffer[3]) << 8);
@@ -90,7 +90,7 @@ void IMU_GetVector(imu_vector_type_t vector_type , float* xyz)
 /*========================External Functions========================*/
 void IMU_WriteData(uint8_t reg, uint8_t data)
 {
-	HAL_I2C_Mem_Write(GlobalConfig , IMU_I2C_ADDRESS , reg , 1 , &data , 1 , HAL_MAX_DELAY);
+	HAL_I2C_Mem_Write(GlobalConfig , IMU_I2C_ADDRESS , reg , 1 , &data , 1 , 20);
 }
 void IMU_SetAxisMap(imu_axis_map_t axis)
 {
@@ -115,13 +115,13 @@ void IMU_Init(I2C_HandleTypeDef* hi2c, imu_opmode_t mode, imu_axis_map_t map)
 
 	// Reset the sensor first
 	Data = 0x20;
-	status = HAL_I2C_Mem_Write(GlobalConfig, IMU_I2C_ADDRESS, BNO055_SYS_TRIGGER_ADDR, 1, &Data, 1, HAL_MAX_DELAY);
+	status = HAL_I2C_Mem_Write(GlobalConfig, IMU_I2C_ADDRESS, BNO055_SYS_TRIGGER_ADDR, 1, &Data, 1, 20);
 	if (status != HAL_OK)
 		return;
 	HAL_Delay(650); // Per datasheet, reset takes ~650ms
 
 	// Check device ID
-	status = HAL_I2C_Mem_Read(GlobalConfig, IMU_I2C_ADDRESS, BNO055_CHIP_ID_ADDR, 1, &id, 1, HAL_MAX_DELAY);
+	status = HAL_I2C_Mem_Read(GlobalConfig, IMU_I2C_ADDRESS, BNO055_CHIP_ID_ADDR, 1, &id, 1, 20);
 	if (status != HAL_OK || id != IMU_ID)
 		return;
 
@@ -152,15 +152,15 @@ void IMU_Task(void*pvParameters)
 	{
 		if (xSemaphoreTake(g_i2c_mutex, pdMS_TO_TICKS(100)) == pdTRUE)
 		{
-			IMU_GetVector(VECTOR_EULER, (float*)&imu_euler_angles.current);
-			IMU_GetVector(VECTOR_LINEARACCEL, (float*)&imu_linear_accels.current);
+//			IMU_GetVector(VECTOR_EULER, (float*)&imu_euler_angles.current);
+//			IMU_GetVector(VECTOR_LINEARACCEL, (float*)&imu_linear_accels.current);
 			xSemaphoreGive(g_i2c_mutex);
 			imu_euler_angles.current.x -= IMU_EULER_ANGLE_OFFSET_X;
 			imu_euler_angles.current.y -= IMU_EULER_ANGLE_OFFSET_Y;
 		}
-		if(DAQ_CheckChange(imu_euler_angles.current.x, imu_euler_angles.prev.x, DAQ_MIN_CHANGE_IMU_ANGLE_X) ||
-		   DAQ_CheckChange(imu_euler_angles.current.y, imu_euler_angles.prev.y, DAQ_MIN_CHANGE_IMU_ANGLE_Y) ||
-		   DAQ_CheckChange(imu_euler_angles.current.z, imu_euler_angles.prev.z, DAQ_MIN_CHANGE_IMU_ANGLE_Z))
+//		if(DAQ_CheckChange(imu_euler_angles.current.x, imu_euler_angles.prev.x, DAQ_MIN_CHANGE_IMU_ANGLE_X) ||
+//		   DAQ_CheckChange(imu_euler_angles.current.y, imu_euler_angles.prev.y, DAQ_MIN_CHANGE_IMU_ANGLE_Y) ||
+//		   DAQ_CheckChange(imu_euler_angles.current.z, imu_euler_angles.prev.z, DAQ_MIN_CHANGE_IMU_ANGLE_Z))
 		{
 			daq_can_msg_t can_msg_imu_angle = {};
 			daq_can_msg_imu_t encoder_msg_imu_angle = {};
@@ -175,9 +175,9 @@ void IMU_Task(void*pvParameters)
 			imu_euler_angles.prev.y = imu_euler_angles.current.y;
 			imu_euler_angles.prev.z = imu_euler_angles.current.z;
 		}
-		if(DAQ_CheckChange(imu_linear_accels.current.x, imu_linear_accels.prev.x, DAQ_MIN_CHANGE_IMU_ACCEL) ||
-		   DAQ_CheckChange(imu_linear_accels.current.y, imu_linear_accels.prev.y, DAQ_MIN_CHANGE_IMU_ACCEL) ||
-		   DAQ_CheckChange(imu_linear_accels.current.z, imu_linear_accels.prev.z, DAQ_MIN_CHANGE_IMU_ACCEL))
+//		if(DAQ_CheckChange(imu_linear_accels.current.x, imu_linear_accels.prev.x, DAQ_MIN_CHANGE_IMU_ACCEL) ||
+//		   DAQ_CheckChange(imu_linear_accels.current.y, imu_linear_accels.prev.y, DAQ_MIN_CHANGE_IMU_ACCEL) ||
+//		   DAQ_CheckChange(imu_linear_accels.current.z, imu_linear_accels.prev.z, DAQ_MIN_CHANGE_IMU_ACCEL))
 		{
 			daq_can_msg_t can_msg_imu_acceleration = {};
 			daq_can_msg_imu_t encoder_msg_imu_acceleration = {};

@@ -125,31 +125,21 @@ typedef enum
 } daq_can_id_t;
 
 typedef struct{
-	uint8_t sec;
-	uint8_t min;
-	uint8_t hrs;
-	uint8_t CanMsgLongLat[8];
-	uint8_t CanMsgTimeSpeed[8];
-	double speed;
-	double longitude;
-	double latitude;
-}daq_gps_data_t;
-
-typedef struct{
 	uint8_t  seconds;
 	uint8_t  minutes;
 	uint8_t  hours;
 	uint16_t counter;
 }daq_timestamp_t;
 
-typedef struct {
-    uint32_t reset_reason;
-    uint32_t fault_type;
+typedef struct __attribute__((packed)) {
+    uint8_t reset_reason;
+    uint8_t fault_type;
     uint32_t fault_address;
     uint32_t stacked_pc;
     daq_timestamp_t timestamp;
-    uint8_t  valid;
 }daq_fault_log_t;
+
+_Static_assert(sizeof(daq_fault_log_t) <= 16, "daq_fault_log_t must not exceed 16 bytes");
 /**
  * @brief Adds one CAN message to the FreeRTOS queue, to be transmitted on CAN bus by the CAN task.
  * @param message Pointer to CAN message object to be enqueued.

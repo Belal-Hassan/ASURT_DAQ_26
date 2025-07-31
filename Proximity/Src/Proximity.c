@@ -10,7 +10,6 @@ static TIM_HandleTypeDef prox_timer_handle;
 static DMA_HandleTypeDef prox_dma_handles[PROX_NO_OF_WHEELS];
 static uint32_t timer_counters[PROX_NO_OF_WHEELS] = {&TIM3->CCR1, &TIM3->CCR2, &TIM3->CCR3, &TIM3->CCR4};
 
-
 static inline float Prox_GetTimerFreq(void)
 {
     float pclk1 = (float)HAL_RCC_GetPCLK1Freq();
@@ -53,8 +52,9 @@ void Prox_Task(void *pvParameters)
                 HAL_DMA_Abort(&prox_dma_handles[wheel_no]);
 
                 // Erase the array.
-                for (uint8_t i = 0; i < PROX_DMA_WHEEL_BUFFER_SIZE; i++)
-                    prox_dma_buffer[wheel_no][i] = 0;
+                memset(prox_dma_buffer[wheel_no], 0, PROX_DMA_WHEEL_BUFFER_SIZE * sizeof(uint16_t));
+                /*for (uint8_t i = 0; i < PROX_DMA_WHEEL_BUFFER_SIZE; i++)
+                    prox_dma_buffer[wheel_no][i] = 0;*/
 
                 // Reset the DMA pointer so that it starts at the beginning of the array.
                 prox_dma_handles[wheel_no].Instance->M0AR = prox_dma_buffer[wheel_no];
@@ -74,8 +74,9 @@ void Prox_Task(void *pvParameters)
                     HAL_DMA_Abort(&prox_dma_handles[wheel_no]);
 
                     // Erase the array.
-                    for (uint8_t i = 0; i < PROX_DMA_WHEEL_BUFFER_SIZE; i++)
-                        prox_dma_buffer[wheel_no][i] = 0;
+                    memset(prox_dma_buffer[wheel_no], 0, PROX_DMA_WHEEL_BUFFER_SIZE * sizeof(uint16_t));
+                    /*for (uint8_t i = 0; i < PROX_DMA_WHEEL_BUFFER_SIZE; i++)
+                        prox_dma_buffer[wheel_no][i] = 0;*/
 
                     // Reset the DMA pointer so that it starts at the beginning of the array.
                     prox_dma_handles[wheel_no].Instance->M0AR = prox_dma_buffer[wheel_no];

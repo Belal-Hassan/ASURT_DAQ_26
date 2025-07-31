@@ -75,12 +75,46 @@ imu_axis_map_t imu_axis_map = {
   .z = BNO055_AXIS_Z,
   .z_sign = BNO055_AXIS_SIGN_POSITIVE
 };
+
+size_t x,y;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 /* USER CODE BEGIN PFP */
-void Task1Blink(void *pvParameters);
+void Task1Blink(void *pvParameters)
+{
+    for(;;)
+    {
+    	vTaskDelay(20);
+        HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_5);
+        y = xPortGetMinimumEverFreeHeapSize();
+    }
+}
+#ifdef DAQ_TRACE_RECORDER
+void vInitRunTimeStats(void)
+{
+    if(!(CoreDebug->DEMCR & CoreDebug_DEMCR_TRCENA_Msk))
+    {
+        CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
+        DWT->CYCCNT = 0;
+        DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
+    }
+}
+uint32_t ulGetRunTimeCounterValue(void)
+{
+    return DWT->CYCCNT;
+}
+void vSnapshotTask(void *pv)
+{
+    while(1)
+    {
+        vTaskDelay(pdMS_TO_TICKS(10000));
+        vTraceStop();
+        Error_Handler();
+    }
+}
+#endif
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -112,7 +146,11 @@ int main(void)
   SystemClock_Config();
 
   /* USER CODE BEGIN SysInit */
-
+#ifdef DAQ_TRACE_RECORDER
+  vInitRunTimeStats();
+  vTraceEnable(TRC_START);
+  xTaskCreate(vSnapshotTask	, "Trace" , 128	 , NULL, 1, NULL);
+#endif
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
@@ -134,13 +172,14 @@ int main(void)
   Temp_Init(&hi2c1);
   HAL_CAN_Start(&hcan1);
   DAQ_CAN_Init(&hcan1, &can_tx_header);
-  xTaskCreate(Task1Blink, "Blink1", 64, NULL, 5, NULL);
-  task_returns[ADC_TASK] = xTaskCreate(ADC_Task		, "ADC_Task" , 2*256 , NULL, 3, &task_handles[ADC_TASK]);
-  task_returns[PROX_TASK]= xTaskCreate(Prox_Task	, "Prox_Task", 256	 , NULL, 1, &task_handles[PROX_TASK]);
-  task_returns[IMU_TASK] = xTaskCreate(IMU_Task		, "IMU_Task" , 2*256 , NULL, 2, &task_handles[IMU_TASK]);
-  task_returns[GPS_TASK] = xTaskCreate(GPS_Task		, "GPS_task" , 256	 , NULL, 3, &task_handles[GPS_TASK]);
+  xTaskCreate(Task1Blink, "Blink1", 64, NULL, 1, NULL);
+  task_returns[ADC_TASK] = xTaskCreate(ADC_Task		, "ADC_Task" , 2*256 , NULL, 5, &task_handles[ADC_TASK]);
+  task_returns[PROX_TASK]= xTaskCreate(Prox_Task	, "Prox_Task", 256 	 , NULL, 8, &task_handles[PROX_TASK]);
+  task_returns[IMU_TASK] = xTaskCreate(IMU_Task		, "IMU_Task" , 2*256 , NULL, 7, &task_handles[IMU_TASK]);
+  task_returns[GPS_TASK] = xTaskCreate(GPS_Task		, "GPS_task" , 256	 , NULL, 6, &task_handles[GPS_TASK]);
   task_returns[TEMP_TASK]= xTaskCreate(Temp_Task 	, "Temp_task", 256 	 , NULL, 4, &task_handles[TEMP_TASK]);
-  task_returns[CAN_TASK] = xTaskCreate(DAQ_CAN_Task	, "CAN_task" , 256	 , NULL, 5, &task_handles[CAN_TASK]);
+  task_returns[CAN_TASK] = xTaskCreate(DAQ_CAN_Task	, "CAN_task" , 128	 , NULL, 3, &task_handles[CAN_TASK]);
+  x = xPortGetFreeHeapSize();
   vTaskStartScheduler();
   /* USER CODE END 2 */
 
@@ -203,15 +242,6 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
-void Task1Blink(void *pvParameters)
-{
-    for(;;)
-    {
-    	vTaskDelay(20);
-        HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_5);
-    }
-}
-
 void HAL_I2C_MasterRxCpltCallback(I2C_HandleTypeDef *hi2c)
 {
 	if(!(g_i2c_dma_flags[g_i2c_dma_device]) && g_i2c_dma_device != I2C_DMA_NO_DEVICE)
@@ -219,6 +249,10 @@ void HAL_I2C_MasterRxCpltCallback(I2C_HandleTypeDef *hi2c)
 		g_i2c_dma_flags[g_i2c_dma_device] = true;
 		g_i2c_dma_device = I2C_DMA_NO_DEVICE;
 	}
+}
+void vApplicationStackOverflowHook(TaskHandle_t xTask, char *pcTaskName) {
+    // Use LED toggle or log to catch this
+	while(1);
 }
 /* USER CODE END 4 */
 

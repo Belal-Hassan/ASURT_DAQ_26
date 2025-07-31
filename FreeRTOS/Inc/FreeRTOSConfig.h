@@ -47,6 +47,7 @@
 	extern uint32_t SystemCoreClock;
 #endif
 #include <stdint.h>
+#include "DAQ_Config.h"
 extern uint32_t SystemCoreClock;
 
 #define configUSE_PREEMPTION			1
@@ -58,7 +59,6 @@ extern uint32_t SystemCoreClock;
 #define configMINIMAL_STACK_SIZE		( ( unsigned short ) 200 )
 #define configTOTAL_HEAP_SIZE			( ( size_t ) ( 20 * 1024 ) )
 #define configMAX_TASK_NAME_LEN			( 16 )
-#define configUSE_TRACE_FACILITY		1
 #define configUSE_16_BIT_TICKS			0
 #define configIDLE_SHOULD_YIELD			1
 #define configUSE_MUTEXES				1
@@ -68,9 +68,23 @@ extern uint32_t SystemCoreClock;
 #define configUSE_MALLOC_FAILED_HOOK	0
 #define configUSE_APPLICATION_TASK_TAG	1
 #define configUSE_COUNTING_SEMAPHORES	1
-#define configGENERATE_RUN_TIME_STATS	0
 #define configSUPPORT_STATIC_ALLOCATION 0
 #define configENABLE_FPU 				1
+#define configUSE_APPLICATION_TASK_TAG  1
+
+#ifdef DAQ_TRACE_RECORDER
+	#define configUSE_TRACE_FACILITY				1
+	#define configUSE_STATS_FORMATTING_FUNCTIONS    1
+	#define configGENERATE_RUN_TIME_STATS			1
+	extern void vInitRunTimeStats(void);
+	extern uint32_t ulGetRunTimeCounterValue(void);
+	#define portCONFIGURE_TIMER_FOR_RUN_TIME_STATS() vInitRunTimeStats()
+	#define portGET_RUN_TIME_COUNTER_VALUE() ulGetRunTimeCounterValue()
+#else
+	#define configUSE_TRACE_FACILITY				0
+	#define configUSE_STATS_FORMATTING_FUNCTIONS	0
+	#define configGENERATE_RUN_TIME_STATS			0
+#endif
 /* Co-routine definitions. */
 #define configUSE_CO_ROUTINES 		0
 #define configMAX_CO_ROUTINE_PRIORITIES ( 2 )
@@ -130,8 +144,6 @@ standard names. */
 #define xPortPendSVHandler 	PendSV_Handler
 #define xPortSysTickHandler	SysTick_Handler
 
+#include "trcRecorder.h"
 
 #endif /* FREERTOS_CONFIG_H */
-
-
-

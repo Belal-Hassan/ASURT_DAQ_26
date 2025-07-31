@@ -40,7 +40,7 @@ void DAQ_CAN_Task(void *pvParameters)
 	daq_can_msg_t can_msg;
 	while (1)
 	{
-		vTaskDelay(1);
+		vTaskDelay(2);
 		queue_size = uxQueueMessagesWaiting(daq_can_queue);
 		if(queue_size)
 		{

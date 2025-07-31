@@ -11,12 +11,12 @@
 
 #include "stm32f446xx.h"
 #include "stm32f4xx_hal.h"
-#include "FreeRTOS.h"
+//#include "FreeRTOS.h"
 #include "DAQ.h"
 
 #define PROX_CALCULATE_SPEED(rpm1, rpm2) ((((rpm1 + rpm2) / 2.0) * DAQ_TIRE_CIRCUMFERENCE * 60.0) / 1000.0)
 #define PROX_NO_OF_WHEELS 			4
-#define PROX_DMA_WHEEL_BUFFER_SIZE	12
+#define PROX_DMA_WHEEL_BUFFER_SIZE	16
 
 typedef enum {
     FRONT_LEFT_BUFF,
