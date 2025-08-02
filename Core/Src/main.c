@@ -79,7 +79,7 @@ imu_axis_map_t imu_axis_map = {
   .z_sign = BNO055_AXIS_SIGN_POSITIVE
 };
 
-size_t x,y;
+size_t x,y,z;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/

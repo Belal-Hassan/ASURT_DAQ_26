@@ -7,6 +7,7 @@
 
 #include "IMU.h"
 #include "IMU_Private.h"
+#include "wwdg.h"
 
 #ifndef PI
 #define PI 					3.14159265359
@@ -119,8 +120,12 @@ void IMU_Init(I2C_HandleTypeDef* hi2c, imu_opmode_t mode, imu_axis_map_t map)
 	status = HAL_I2C_Mem_Write(GlobalConfig, IMU_I2C_ADDRESS, BNO055_SYS_TRIGGER_ADDR, 1, &Data, 1, 20);
 	if (status != HAL_OK)
 		return;
-	HAL_Delay(650); // Per datasheet, reset takes ~650ms
-
+	//HAL_Delay(650); // Per datasheet, reset takes ~650ms
+	for(uint8_t i = 0; i < 13; i++)
+	{
+		HAL_Delay(50);
+		HAL_WWDG_Refresh(&hwwdg);
+	}
 	// Check device ID
 	status = HAL_I2C_Mem_Read(GlobalConfig, IMU_I2C_ADDRESS, BNO055_CHIP_ID_ADDR, 1, &id, 1, 20);
 	if (status != HAL_OK || id != IMU_ID)
@@ -144,6 +149,7 @@ void IMU_Init(I2C_HandleTypeDef* hi2c, imu_opmode_t mode, imu_axis_map_t map)
 	// Set operating mode
 	IMU_SetMode(mode);
 	HAL_Delay(20);
+	HAL_WWDG_Refresh(&hwwdg);
 }
 void IMU_Task(void*pvParameters)
 {
