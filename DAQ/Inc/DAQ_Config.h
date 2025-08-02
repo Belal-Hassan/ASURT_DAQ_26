@@ -8,6 +8,8 @@
 #ifndef DAQ_DAQ_CONFIG_H_
 #define DAQ_DAQ_CONFIG_H_
 
+#include <stdint.h>
+
 #define DAQ_TIRE_CIRCUMFERENCE 3.1415 * 18 * 0.0254
 
 #define DAQ_CAN_BASE_ID 				0x71
@@ -20,7 +22,7 @@
 #define DAQ_IMU_RST_GPIO_PORT			GPIOC
 #define DAQ_IMU_RST_PIN					GPIO_PIN_13
 
-#define DAQ_NO_OF_TASKS 				6
+#define DAQ_NO_OF_TASKS 				7
 
 #define DAQ_NO_OF_SUSPENSION			4
 #define DAQ_NO_OF_PRESSURE				2
@@ -45,6 +47,8 @@
 #define DAQ_ACCURACY_PRESSURE			1000
 #define DAQ_ACCURACY_TEMP 				10
 
-#define DAQ_TRACE_RECORDER // Comment if tracing is not needed
+//#define DAQ_TRACE_RECORDER // Comment if tracing is not needed
+
+#define DAQ_BKPSRAM_BASE_ADDR			0x40024000
 
 #endif /* DAQ_DAQ_CONFIG_H_ */

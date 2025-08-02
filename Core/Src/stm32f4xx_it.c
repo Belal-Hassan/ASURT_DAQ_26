@@ -22,6 +22,8 @@
 #include "stm32f4xx_it.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "DAQ.h"
+#include "core_cm4.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -42,6 +44,7 @@
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN PV */
 extern I2C_HandleTypeDef hi2c1;
+extern daq_timestamp_t g_timestamp;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -91,7 +94,14 @@ void NMI_Handler(void)
 void HardFault_Handler(void)
 {
   /* USER CODE BEGIN HardFault_IRQn 0 */
-
+	__disable_irq();
+	fault_log_t log = {0};
+	log.reset_reason = DAQ_RESET_REASON_HARDFAULT;
+	log.fault_status = SCB->HFSR;
+	log.fault_address = 0;
+	//log.stacked_pc = __get_LR();
+	log.timestamp = g_timestamp;
+	DAQ_FaultLog_Write(log);
   /* USER CODE END HardFault_IRQn 0 */
   while (1)
   {
@@ -106,7 +116,14 @@ void HardFault_Handler(void)
 void MemManage_Handler(void)
 {
   /* USER CODE BEGIN MemoryManagement_IRQn 0 */
-
+	__disable_irq();
+	fault_log_t log = {0};
+	log.reset_reason = DAQ_RESET_REASON_MEMMANAGE;
+	log.fault_status = SCB->CFSR & 0x000000FF;
+	log.fault_address = SCB->MMFAR;
+	//log.stacked_pc = __get_LR();
+	log.timestamp = g_timestamp;
+	DAQ_FaultLog_Write(log);
   /* USER CODE END MemoryManagement_IRQn 0 */
   while (1)
   {
@@ -121,7 +138,14 @@ void MemManage_Handler(void)
 void BusFault_Handler(void)
 {
   /* USER CODE BEGIN BusFault_IRQn 0 */
-
+	__disable_irq();
+	fault_log_t log = {0};
+	log.reset_reason = DAQ_RESET_REASON_BUSFAULT;
+	log.fault_status = SCB->CFSR & 0x0000FF00;
+	log.fault_address = SCB->BFAR;
+	//log.stacked_pc = __get_LR();
+	log.timestamp = g_timestamp;
+	DAQ_FaultLog_Write(log);
   /* USER CODE END BusFault_IRQn 0 */
   while (1)
   {
@@ -136,7 +160,13 @@ void BusFault_Handler(void)
 void UsageFault_Handler(void)
 {
   /* USER CODE BEGIN UsageFault_IRQn 0 */
-
+	__disable_irq();
+	fault_log_t log = {0};
+	log.reset_reason = DAQ_RESET_REASON_USAGEFAULT;
+	log.fault_status = SCB->CFSR & 0xFFFF0000;
+	//log.stacked_pc = __get_LR();
+	log.timestamp = g_timestamp;
+	DAQ_FaultLog_Write(log);
   /* USER CODE END UsageFault_IRQn 0 */
   while (1)
   {
@@ -151,10 +181,10 @@ void UsageFault_Handler(void)
 //void SVC_Handler(void)
 //{
 //  /* USER CODE BEGIN SVCall_IRQn 0 */
-//////////////////////////////////
+////////////////////////////////////////////
 //  /* USER CODE END SVCall_IRQn 0 */
 //  /* USER CODE BEGIN SVCall_IRQn 1 */
-//////////////////////////////////
+////////////////////////////////////////////
 //  /* USER CODE END SVCall_IRQn 1 */
 //}
 
@@ -177,28 +207,28 @@ void DebugMon_Handler(void)
 //void PendSV_Handler(void)
 //{
 //  /* USER CODE BEGIN PendSV_IRQn 0 */
-//////////void PendSV_Handler(void)
-//////////{
-//////////////////////////////////
+////////////////////void PendSV_Handler(void)
+////////////////////{
+////////////////////////////////////////////
 //  /* USER CODE END PendSV_IRQn 0 */
 //  /* USER CODE BEGIN PendSV_IRQn 1 */
-//////////////////////////////////
-//////////
-//////////}
+////////////////////////////////////////////
+////////////////////
+////////////////////}
 //  /* USER CODE END PendSV_IRQn 1 */
 //}
-
-/**
-  * @brief This function handles System tick timer.
-  */
+//
+///**
+//  * @brief This function handles System tick timer.
+//  */
 //void SysTick_Handler(void)
 //{
 //  /* USER CODE BEGIN SysTick_IRQn 0 */
-////////////////////////////////
+//////////////////////////////////////////
 //  /* USER CODE END SysTick_IRQn 0 */
 //
 //  /* USER CODE BEGIN SysTick_IRQn 1 */
-////////////////////////////////
+//////////////////////////////////////////
 //  /* USER CODE END SysTick_IRQn 1 */
 //}
 

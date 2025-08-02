@@ -7,6 +7,7 @@
 #include "GPS.h"
 
 extern SemaphoreHandle_t g_i2c_mutex;
+extern daq_task_entry_count_t g_task_entry_count;
 extern daq_i2c_dma_devices_t g_i2c_dma_device;
 extern bool g_i2c_dma_flags[DAQ_NO_OF_I2C_DMA_DEVICES];
 char gps_i2c_buffer[45];
@@ -100,8 +101,8 @@ void GPS_Task(void *pvParameters)
         	// If valid GPS data received
         	if (gps_data.status == 'A')
         	{
-        		daq_can_msg_t can_msg_gps = {};
-        		daq_can_msg_gps_t encoder_msg_gps = {};
+        		daq_can_msg_t can_msg_gps = {0};
+        		daq_can_msg_gps_t encoder_msg_gps = {0};
         		if(gps_data.lat_dir == 'E')
         			encoder_msg_gps.latitude = (float)gps_data.latitude;
         		else
@@ -117,6 +118,7 @@ void GPS_Task(void *pvParameters)
         		DAQ_CAN_Msg_Enqueue(&can_msg_gps);
         	}
         }
-        vTaskDelayUntil(&xLastWakeTime, 11);
+        g_task_entry_count.gps++;
+        vTaskDelayUntil(&xLastWakeTime, 8);
     }
 }

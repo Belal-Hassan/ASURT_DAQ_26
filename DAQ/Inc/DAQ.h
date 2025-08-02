@@ -36,6 +36,24 @@ typedef enum {
 	CAN_TASK,
 	WWDG_TASK
 }daq_task_handles_t;
+typedef enum{
+	DAQ_FAULT_LOGGING_UNINITIALIZED = 6,
+	DAQ_FAULT_LOGGING_INITIALIZED,
+	DAQ_FAULT_LOGGED,
+	DAQ_FAULT_READ
+}daq_bkpsram_states_t;
+typedef enum{
+	DAQ_BKPSRAM_INIT_WORD = 0,
+	DAQ_BKPSRAM_STATE_WORD
+}daq_bkpsram_words_t;
+typedef enum{
+	DAQ_RESET_REASON_NONE = 0,
+	DAQ_RESET_REASON_HARDFAULT = 7,
+	DAQ_RESET_REASON_MEMMANAGE,
+	DAQ_RESET_REASON_BUSFAULT,
+	DAQ_RESET_REASON_USAGEFAULT,
+	DAQ_RESET_REASON_ERRORHANDLER
+}daq_reset_reasons_t;
 /**
  * @brief Message to be enqueued in the CAN queue.
  *
@@ -130,16 +148,30 @@ typedef struct{
 	uint8_t  hours;
 	uint16_t counter;
 }daq_timestamp_t;
-
+typedef struct{
+	uint16_t adc : 2;
+	uint16_t imu : 2;
+	uint16_t gps : 3;
+	uint16_t prox: 3;
+	uint16_t temp: 2;
+	uint16_t can : 4;
+}daq_task_entry_count_t;
+_Static_assert(sizeof(daq_task_entry_count_t) <= 2, "daq_task_entry_count_t must not exceed 2 bytes");
 typedef struct __attribute__((packed)) {
     uint8_t reset_reason;
-    uint8_t fault_type;
+    uint8_t fault_status;
     uint32_t fault_address;
-    uint32_t stacked_pc;
+    //uint32_t stack_frame[8]; // suggested future improvement.
+    daq_task_entry_count_t task_entry_count;
     daq_timestamp_t timestamp;
+}fault_log_t;
+_Static_assert(sizeof(fault_log_t) <= 16, "daq_fault_log_t must not exceed 16 bytes");
+typedef struct{
+    fault_log_t prev;
+    fault_log_t current;
 }daq_fault_log_t;
 
-_Static_assert(sizeof(daq_fault_log_t) <= 16, "daq_fault_log_t must not exceed 16 bytes");
+bool DAQ_Tasks_Valid(BaseType_t returns[DAQ_NO_OF_TASKS]);
 /**
  * @brief Adds one CAN message to the FreeRTOS queue, to be transmitted on CAN bus by the CAN task.
  * @param message Pointer to CAN message object to be enqueued.
@@ -153,7 +185,7 @@ void DAQ_CAN_Msg_Enqueue(daq_can_msg_t* msg);
  * @param can_tx_header Pointer to CAN TX header object.
  */
 void DAQ_CAN_Init(CAN_HandleTypeDef *can_handle, CAN_TxHeaderTypeDef* can_tx_header);
-
+void DAQ_FaultLog_Init(void);
 /**
  * @brief Dequeues one COMM_can_message_t from the FreeRTOS CAN queue.
  *
@@ -161,6 +193,8 @@ void DAQ_CAN_Init(CAN_HandleTypeDef *can_handle, CAN_TxHeaderTypeDef* can_tx_hea
  * @attention This function should only be used in CAN task. If the queue is empty, it will block the task until the queue is not empty.
  */
 daq_can_msg_t DAQ_CAN_Msg_Dequeue(void);
+daq_fault_log_t DAQ_FaultLog_Read(void);
+void DAQ_FaultLog_Write(fault_log_t log);
 void DAQ_CAN_Task(void *pvParameters);
 
 #endif /* DAQ_DAQ_H_ */

@@ -24,6 +24,7 @@
 #include "i2c.h"
 #include "spi.h"
 #include "tim.h"
+#include "wwdg.h"
 #include "gpio.h"
 
 /* Private includes ----------------------------------------------------------*/
@@ -54,10 +55,12 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-daq_timestamp_t g_timestamp;
+daq_timestamp_t g_timestamp, time;
+daq_fault_log_t g_fault;
 
 BaseType_t task_returns[DAQ_NO_OF_TASKS];
 TaskHandle_t task_handles[DAQ_NO_OF_TASKS];
+daq_task_entry_count_t g_task_entry_count;
 SemaphoreHandle_t g_i2c_mutex;
 
 CAN_TxHeaderTypeDef can_tx_header;
@@ -86,10 +89,36 @@ void Task1Blink(void *pvParameters)
 {
     for(;;)
     {
+    	vTaskDelay(50);
+        HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_5);
+        y = xPortGetMinimumEverFreeHeapSize();
+    }
+}
+void Fault_Blink(void *pvParameters)
+{
+    for(;;)
+    {
     	vTaskDelay(20);
         HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_5);
         y = xPortGetMinimumEverFreeHeapSize();
     }
+}
+void WWDG_Task(void *pvParameters)
+{
+	bool initial = 1;
+	for(;;)
+	{
+		vTaskDelay(pdMS_TO_TICKS(60));
+		if(initial || (g_task_entry_count.adc && g_task_entry_count.prox && g_task_entry_count.imu &&
+		   g_task_entry_count.gps && g_task_entry_count.temp && g_task_entry_count.can))
+		{
+			initial = 0;
+			HAL_WWDG_Refresh(&hwwdg);
+			g_task_entry_count = (daq_task_entry_count_t){0};
+		}
+		else
+			Error_Handler();
+	}
 }
 #ifdef DAQ_TRACE_RECORDER
 void vInitRunTimeStats(void)
@@ -109,7 +138,7 @@ void vSnapshotTask(void *pv)
 {
     while(1)
     {
-        vTaskDelay(pdMS_TO_TICKS(10000));
+        vTaskDelay(pdMS_TO_TICKS(1000));
         vTraceStop();
         Error_Handler();
     }
@@ -149,7 +178,7 @@ int main(void)
 #ifdef DAQ_TRACE_RECORDER
   vInitRunTimeStats();
   vTraceEnable(TRC_START);
-  xTaskCreate(vSnapshotTask	, "Trace" , 128	 , NULL, 1, NULL);
+  xTaskCreate(vSnapshotTask	, "Trace_Task" , 128, NULL, 1, NULL);
 #endif
   /* USER CODE END SysInit */
 
@@ -161,6 +190,7 @@ int main(void)
   MX_I2C1_Init();
   MX_SPI1_Init();
   MX_TIM3_Init();
+  MX_WWDG_Init();
   /* USER CODE BEGIN 2 */
   g_i2c_mutex  = xSemaphoreCreateMutex();
   if (g_i2c_mutex == NULL)
@@ -170,17 +200,32 @@ int main(void)
   IMU_Init(&hi2c1, OPERATION_MODE_NDOF, imu_axis_map);
   GPS_Init(&hi2c1);
   Temp_Init(&hi2c1);
+
   HAL_CAN_Start(&hcan1);
   DAQ_CAN_Init(&hcan1, &can_tx_header);
-  xTaskCreate(Task1Blink, "Blink1", 64, NULL, 1, NULL);
-  task_returns[ADC_TASK] = xTaskCreate(ADC_Task		, "ADC_Task" , 2*256 , NULL, 5, &task_handles[ADC_TASK]);
-  task_returns[PROX_TASK]= xTaskCreate(Prox_Task	, "Prox_Task", 256 	 , NULL, 8, &task_handles[PROX_TASK]);
-  task_returns[IMU_TASK] = xTaskCreate(IMU_Task		, "IMU_Task" , 2*256 , NULL, 7, &task_handles[IMU_TASK]);
-  task_returns[GPS_TASK] = xTaskCreate(GPS_Task		, "GPS_task" , 256	 , NULL, 6, &task_handles[GPS_TASK]);
-  task_returns[TEMP_TASK]= xTaskCreate(Temp_Task 	, "Temp_task", 256 	 , NULL, 4, &task_handles[TEMP_TASK]);
-  task_returns[CAN_TASK] = xTaskCreate(DAQ_CAN_Task	, "CAN_task" , 128	 , NULL, 3, &task_handles[CAN_TASK]);
-  x = xPortGetFreeHeapSize();
-  vTaskStartScheduler();
+
+  DAQ_FaultLog_Init();
+  g_fault = DAQ_FaultLog_Read();
+  if(g_fault.current.reset_reason == DAQ_RESET_REASON_HARDFAULT ||
+     g_fault.current.reset_reason == DAQ_RESET_REASON_MEMMANAGE ||
+	 g_fault.current.reset_reason == DAQ_RESET_REASON_BUSFAULT  ||
+	 g_fault.current.reset_reason == DAQ_RESET_REASON_USAGEFAULT)
+	  xTaskCreate(Fault_Blink	, "Fault_Blink"	, 64, NULL, 1, NULL);
+  else
+	  xTaskCreate(Task1Blink	, "Blink1"		, 64, NULL, 1, NULL);
+
+  task_returns[ADC_TASK] = xTaskCreate(ADC_Task		, "ADC_Task" , 2*256, NULL, 5, &task_handles[ADC_TASK]);
+  task_returns[PROX_TASK]= xTaskCreate(Prox_Task	, "Prox_Task", 256 	, NULL, 8, &task_handles[PROX_TASK]);
+  task_returns[IMU_TASK] = xTaskCreate(IMU_Task		, "IMU_Task" , 2*256, NULL, 7, &task_handles[IMU_TASK]);
+  task_returns[GPS_TASK] = xTaskCreate(GPS_Task		, "GPS_task" , 256	, NULL, 6, &task_handles[GPS_TASK]);
+  task_returns[TEMP_TASK]= xTaskCreate(Temp_Task 	, "Temp_task", 256 	, NULL, 4, &task_handles[TEMP_TASK]);
+  task_returns[CAN_TASK] = xTaskCreate(DAQ_CAN_Task	, "CAN_task" , 128	, NULL, 3, &task_handles[CAN_TASK]);
+  task_returns[WWDG_TASK]= xTaskCreate(WWDG_Task	, "WWDG_task", 128	, NULL, 7, &task_handles[WWDG_TASK]);
+
+  HAL_WWDG_Refresh(&hwwdg);
+
+  if(DAQ_Tasks_Valid(task_returns))
+	  vTaskStartScheduler();
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -232,7 +277,7 @@ void SystemClock_Config(void)
                               |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
   RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
   RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
-  RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV2;
+  RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV4;
   RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
 
   if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_2) != HAL_OK)
@@ -249,10 +294,6 @@ void HAL_I2C_MasterRxCpltCallback(I2C_HandleTypeDef *hi2c)
 		g_i2c_dma_flags[g_i2c_dma_device] = true;
 		g_i2c_dma_device = I2C_DMA_NO_DEVICE;
 	}
-}
-void vApplicationStackOverflowHook(TaskHandle_t xTask, char *pcTaskName) {
-    // Use LED toggle or log to catch this
-	while(1);
 }
 /* USER CODE END 4 */
 
@@ -307,6 +348,11 @@ void Error_Handler(void)
   /* USER CODE BEGIN Error_Handler_Debug */
   /* User can add his own implementation to report the HAL error return state */
   __disable_irq();
+  fault_log_t log = {0};
+  log.reset_reason = DAQ_RESET_REASON_ERRORHANDLER;
+  log.task_entry_count = g_task_entry_count;
+  log.timestamp = g_timestamp;
+  DAQ_FaultLog_Write(log);
   while (1)
   {
   }

@@ -9,6 +9,7 @@ prox_rpms_t prox_wheel_rpms;
 static TIM_HandleTypeDef prox_timer_handle;
 static DMA_HandleTypeDef prox_dma_handles[PROX_NO_OF_WHEELS];
 static uint32_t timer_counters[PROX_NO_OF_WHEELS] = {&TIM3->CCR1, &TIM3->CCR2, &TIM3->CCR3, &TIM3->CCR4};
+extern daq_task_entry_count_t g_task_entry_count;
 
 static inline float Prox_GetTimerFreq(void)
 {
@@ -32,7 +33,7 @@ void Prox_Task(void *pvParameters)
     uint8_t slow_counter[PROX_NO_OF_WHEELS] = {0, 0, 0, 0};
     while (1)
     {
-        vTaskDelay(10);
+        vTaskDelay(7);
         for (uint8_t wheel_no = 0; wheel_no < PROX_NO_OF_WHEELS; wheel_no++)
         {
             uint8_t last_reading_index = 0;
@@ -63,7 +64,7 @@ void Prox_Task(void *pvParameters)
             }
             else
             {
-                if (slow_counter[wheel_no] <= 14) // The car is slow
+                if (slow_counter[wheel_no] <= 20) // The car is slow
                     slow_counter[wheel_no]++; // Increment the corresponding slow_counter
                 else
                 { // The car is at rest.
@@ -90,8 +91,8 @@ void Prox_Task(void *pvParameters)
 		   DAQ_CheckChange(prox_wheel_rpms.current[REAR_LEFT_BUFF], prox_wheel_rpms.prev[REAR_LEFT_BUFF], DAQ_MIN_CHANGE_PROX_RPM) ||
 		   DAQ_CheckChange(prox_wheel_rpms.current[REAR_RIGHT_BUFF], prox_wheel_rpms.prev[REAR_RIGHT_BUFF], DAQ_MIN_CHANGE_PROX_RPM))
         {
-        	daq_can_msg_t can_msg_prox = {};
-        	daq_can_msg_prox_t encoder_msg_prox = {};
+        	daq_can_msg_t can_msg_prox = {0};
+        	daq_can_msg_prox_t encoder_msg_prox = {0};
         	can_msg_prox.id = DAQ_CAN_ID_PROX_ENCODER;
         	can_msg_prox.size = 8;
         	encoder_msg_prox.rpm_front_left  = (uint64_t)prox_wheel_rpms.current[FRONT_LEFT_BUFF];
@@ -105,5 +106,6 @@ void Prox_Task(void *pvParameters)
         	for(uint8_t i = 0; i < PROX_NO_OF_WHEELS; i++)
         		prox_wheel_rpms.prev[i] = prox_wheel_rpms.current[i];
         }
+        g_task_entry_count.prox++;
     }
 }

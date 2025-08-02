@@ -8,6 +8,7 @@
 #include "Temperature_Private.h"
 
 extern SemaphoreHandle_t g_i2c_mutex;
+extern daq_task_entry_count_t g_task_entry_count;
 moving_avg_t temp_moving_avgs[TEMP_NO_OF_SENSORS];
 temp_sensor_data_t temp_sensors_data[TEMP_NO_OF_SENSORS];
 temp_readings_t wheel_temps;
@@ -70,8 +71,8 @@ void Temp_Task(void *pvParameters)
 //		   DAQ_CheckChange(wheel_temps.current[TEMP_REAR_LEFT], wheel_temps.prev[TEMP_REAR_LEFT], DAQ_MIN_CHANGE_TEMP) 	  	||
 //		   DAQ_CheckChange(wheel_temps.current[TEMP_REAR_RIGHT], wheel_temps.prev[TEMP_REAR_RIGHT], DAQ_MIN_CHANGE_TEMP))
         {
-        	daq_can_msg_t can_msg_temp = {};
-        	daq_can_msg_temp_t encoder_msg_temp = {};
+        	daq_can_msg_t can_msg_temp = {0};
+        	daq_can_msg_temp_t encoder_msg_temp = {0};
         	can_msg_temp.id = DAQ_CAN_ID_TEMP;
         	encoder_msg_temp.temp_front_left = (uint16_t)(wheel_temps.current[TEMP_FRONT_LEFT] * DAQ_ACCURACY_TEMP);
         	encoder_msg_temp.temp_front_right= (uint16_t)(wheel_temps.current[TEMP_FRONT_RIGHT] * DAQ_ACCURACY_TEMP);
@@ -83,6 +84,7 @@ void Temp_Task(void *pvParameters)
         	for(uint8_t i = 0; i < TEMP_NO_OF_SENSORS; i++)
         		wheel_temps.prev[i] = wheel_temps.current[i];
         }
-        vTaskDelayUntil(&xLastWakeTime, 13);
+        g_task_entry_count.temp++;
+        vTaskDelayUntil(&xLastWakeTime, 9);
     }
 }

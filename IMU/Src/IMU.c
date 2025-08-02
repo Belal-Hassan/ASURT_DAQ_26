@@ -13,6 +13,7 @@
 #endif /* PI */
 
 extern SemaphoreHandle_t g_i2c_mutex;
+extern daq_task_entry_count_t g_task_entry_count;
 imu_readings_t imu_linear_accels, imu_euler_angles;
 static imu_opmode_t imu_mode;
 
@@ -162,8 +163,8 @@ void IMU_Task(void*pvParameters)
 //		   DAQ_CheckChange(imu_euler_angles.current.y, imu_euler_angles.prev.y, DAQ_MIN_CHANGE_IMU_ANGLE_Y) ||
 //		   DAQ_CheckChange(imu_euler_angles.current.z, imu_euler_angles.prev.z, DAQ_MIN_CHANGE_IMU_ANGLE_Z))
 		{
-			daq_can_msg_t can_msg_imu_angle = {};
-			daq_can_msg_imu_t encoder_msg_imu_angle = {};
+			daq_can_msg_t can_msg_imu_angle = {0};
+			daq_can_msg_imu_t encoder_msg_imu_angle = {0};
 			encoder_msg_imu_angle.x = (int16_t)(imu_euler_angles.current.x * DAQ_ACCURACY_IMU_ANGLE_X);
 			encoder_msg_imu_angle.y = (int16_t)(imu_euler_angles.current.y * DAQ_ACCURACY_IMU_ANGLE_Y);
 			encoder_msg_imu_angle.z = (int16_t)(imu_euler_angles.current.z * DAQ_ACCURACY_IMU_ANGLE_Z);
@@ -179,8 +180,8 @@ void IMU_Task(void*pvParameters)
 //		   DAQ_CheckChange(imu_linear_accels.current.y, imu_linear_accels.prev.y, DAQ_MIN_CHANGE_IMU_ACCEL) ||
 //		   DAQ_CheckChange(imu_linear_accels.current.z, imu_linear_accels.prev.z, DAQ_MIN_CHANGE_IMU_ACCEL))
 		{
-			daq_can_msg_t can_msg_imu_acceleration = {};
-			daq_can_msg_imu_t encoder_msg_imu_acceleration = {};
+			daq_can_msg_t can_msg_imu_acceleration = {0};
+			daq_can_msg_imu_t encoder_msg_imu_acceleration = {0};
 			encoder_msg_imu_acceleration.x = (int16_t)(imu_linear_accels.current.x * DAQ_ACCURACY_IMU_ANGLE_X);
 			encoder_msg_imu_acceleration.y = (int16_t)(imu_linear_accels.current.y * DAQ_ACCURACY_IMU_ANGLE_Y);
 			encoder_msg_imu_acceleration.z = (int16_t)(imu_linear_accels.current.z * DAQ_ACCURACY_IMU_ANGLE_Z);
@@ -192,6 +193,7 @@ void IMU_Task(void*pvParameters)
 			imu_linear_accels.prev.y = imu_linear_accels.current.y;
 			imu_linear_accels.prev.z = imu_linear_accels.current.z;
 		}
-		vTaskDelayUntil(&xLastWakeTime, 11);
+		g_task_entry_count.imu++;
+		vTaskDelayUntil(&xLastWakeTime, 8);
 	}
 }

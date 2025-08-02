@@ -9,6 +9,7 @@
 adc_median_filter_t adc_filters[DAQ_NO_OF_ADC_SENSORS];
 volatile uint16_t adc_raw_values[DAQ_NO_OF_ADC_SENSORS] = {0,0,0,0,0,0};
 adc_readings_t adc_readings;
+extern daq_task_entry_count_t g_task_entry_count;
 
 
 void Median_Init(median_filter_t* this, uint16_t* buffer, uint16_t** pt_buffer_sorted, uint16_t size)
@@ -169,8 +170,8 @@ void ADC_Task(void *pvParameters)
 		   DAQ_CheckChange(adc_readings.current[PRESSURE_REAR_LEFT], 	adc_readings.prev[PRESSURE_REAR_LEFT], 		DAQ_MIN_CHANGE_PRESSURE)   ||
 		   DAQ_CheckChange(adc_readings.current[PRESSURE_REAR_RIGHT], 	adc_readings.prev[PRESSURE_REAR_RIGHT], 	DAQ_MIN_CHANGE_PRESSURE))
 		{
-			daq_can_msg_t can_msg_adc = {};
-			daq_can_msg_adc_t encoder_msg_adc = {};
+			daq_can_msg_t can_msg_adc = {0};
+			daq_can_msg_adc_t encoder_msg_adc = {0};
 			encoder_msg_adc.suspension_front_left 	= (uint64_t)(adc_filters[SUSPENSION_FRONT_LEFT].percent * DAQ_ACCURACY_SUSPENSION);
 			encoder_msg_adc.suspension_front_right	= (uint64_t)(adc_filters[SUSPENSION_FRONT_RIGHT].percent* DAQ_ACCURACY_SUSPENSION);
 			encoder_msg_adc.suspension_rear_left 	= (uint64_t)(adc_filters[SUSPENSION_REAR_LEFT].percent	* DAQ_ACCURACY_SUSPENSION);
@@ -184,6 +185,7 @@ void ADC_Task(void *pvParameters)
 			for(uint8_t i = 0; i < DAQ_NO_OF_ADC_SENSORS; i++)
 				adc_readings.prev[i] = adc_readings.current[i];
 		}
+		g_task_entry_count.adc++;
 		vTaskDelayUntil(&xLastWakeTime, 7);
 	}
 }
