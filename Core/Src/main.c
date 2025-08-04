@@ -84,22 +84,6 @@ size_t x,y,z;
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 /* USER CODE BEGIN PFP */
-void starver(void *pv)
-{
-	//vTaskDelay(pdMS_TO_TICKS(500))
-	for(;;)
-	{
-
-	}
-}
-void Task(void *pvParameters)
-{
-    for(;;)
-    {
-    	vTaskDelay(pdMS_TO_TICKS(1000));
-        Error_Handler();
-    }
-}
 void Task1Blink(void *pvParameters)
 {
     for(;;)
@@ -239,7 +223,7 @@ int main(void)
   MX_I2C1_Init();
   MX_SPI1_Init();
   MX_TIM3_Init();
-  //MX_WWDG_Init();
+  MX_WWDG_Init();
   /* USER CODE BEGIN 2 */
   g_i2c_mutex  = xSemaphoreCreateMutex();
   if (g_i2c_mutex == NULL)
