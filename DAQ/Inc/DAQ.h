@@ -208,7 +208,7 @@ void DAQ_FaultLog_Init(void);
  * @return COMM_can_message_t: the dequeued message.
  * @attention This function should only be used in CAN task. If the queue is empty, it will block the task until the queue is not empty.
  */
-daq_can_msg_t DAQ_CAN_Msg_Dequeue(void);
+BaseType_t DAQ_CAN_Msg_Dequeue(daq_can_msg_t* msg);
 daq_fault_log_t DAQ_FaultLog_Read(void);
 void DAQ_FaultLog_Write(fault_log_t log);
 void DAQ_CAN_Task(void *pvParameters);

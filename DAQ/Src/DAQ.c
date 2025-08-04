@@ -85,11 +85,9 @@ void DAQ_CAN_Msg_Enqueue(daq_can_msg_t* message)
 {
     xQueueSend(daq_can_queue, message, 2);
 }
-daq_can_msg_t DAQ_CAN_Msg_Dequeue(void)
+BaseType_t DAQ_CAN_Msg_Dequeue(daq_can_msg_t* msg)
 {
-	daq_can_msg_t message = {};
-    xQueueReceive(daq_can_queue, &message, portMAX_DELAY);
-    return message;
+    return xQueueReceive(daq_can_queue, msg, DAQ_CAN_MAX_WAIT_TICKS);
 }
 daq_fault_log_t DAQ_FaultLog_Read(void)
 {
@@ -125,20 +123,34 @@ void DAQ_CAN_Task(void *pvParameters)
 	daq_can_msg_t can_msg = {0};
 	while (1)
 	{
-		vTaskDelay(4);
-		queue_size = uxQueueMessagesWaiting(daq_can_queue);
-		while(queue_size--)
+		if(DAQ_CAN_Msg_Dequeue(&can_msg) == pdTRUE)
 		{
-			can_msg = DAQ_CAN_Msg_Dequeue();
 			ptr_tx_header->DLC = can_msg.size;
 			ptr_tx_header->StdId = can_msg.id;
 			//if(HAL_CAN_GetTxMailboxesFreeLevel(&daq_can_handle) > 0)
 			{
 				if (HAL_CAN_AddTxMessage(&daq_can_handle, ptr_tx_header, &can_msg.data, &tx_mailbox) == HAL_ERROR)
 				{
-					//Error_Handler();
+				//Error_Handler();
 				}
 			}
 		}
+//		if(ulTaskNotifyTake(pdFALSE, max_wait_ticks))
+//		{
+//			queue_size = uxQueueMessagesWaiting(daq_can_queue);
+//			if(queue_size)
+//			{
+//				can_msg = DAQ_CAN_Msg_Dequeue();
+//				ptr_tx_header->DLC = can_msg.size;
+//				ptr_tx_header->StdId = can_msg.id;
+//				//if(HAL_CAN_GetTxMailboxesFreeLevel(&daq_can_handle) > 0)
+//				{
+//					if (HAL_CAN_AddTxMessage(&daq_can_handle, ptr_tx_header, &can_msg.data, &tx_mailbox) == HAL_ERROR)
+//					{
+//					//Error_Handler();
+//					}
+//				}
+//			}
+//		}
 	}
 }

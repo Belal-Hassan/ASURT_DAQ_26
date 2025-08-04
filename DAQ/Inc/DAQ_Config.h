@@ -39,6 +39,8 @@
 #define DAQ_MIN_CHANGE_PRESSURE 		5
 
 
+#define DAQ_CAN_MAX_WAIT_TICKS 			10
+
 /* Accuracies of  */
 #define DAQ_ACCURACY_IMU_ANGLE_X        100
 #define DAQ_ACCURACY_IMU_ANGLE_Y        100
@@ -48,7 +50,7 @@
 #define DAQ_ACCURACY_PRESSURE			1000
 #define DAQ_ACCURACY_TEMP 				10
 
-#define DAQ_TRACE_RECORDE // Comment if tracing is not needed
+//#define DAQ_TRACE_RECORDER // Comment if tracing is not needed
 
 #define DAQ_BKPSRAM_BASE_ADDR			0x40024000
 

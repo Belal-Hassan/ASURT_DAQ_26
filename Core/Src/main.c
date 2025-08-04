@@ -104,7 +104,7 @@ void Task1Blink(void *pvParameters)
 {
     for(;;)
     {
-    	vTaskDelay(60);
+    	vTaskDelay(75);
         HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_5);
     }
 }
@@ -239,7 +239,7 @@ int main(void)
   MX_I2C1_Init();
   MX_SPI1_Init();
   MX_TIM3_Init();
-  MX_WWDG_Init();
+  //MX_WWDG_Init();
   /* USER CODE BEGIN 2 */
   g_i2c_mutex  = xSemaphoreCreateMutex();
   if (g_i2c_mutex == NULL)
