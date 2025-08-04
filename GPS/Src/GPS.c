@@ -7,7 +7,7 @@
 #include "GPS.h"
 
 extern SemaphoreHandle_t g_i2c_mutex;
-extern daq_task_entry_count_t g_task_entry_count;
+extern daq_fault_record_t g_fault_record;
 extern daq_i2c_dma_devices_t g_i2c_dma_device;
 extern bool g_i2c_dma_flags[DAQ_NO_OF_I2C_DMA_DEVICES];
 char gps_i2c_buffer[45];
@@ -89,6 +89,7 @@ void GPS_Task(void *pvParameters)
 	xLastWakeTime = xTaskGetTickCount();
     while (1)
     {
+    	g_fault_record.tasks[GPS_TASK].start_tick = xTaskGetTickCount();
         if (xSemaphoreTake(g_i2c_mutex, pdMS_TO_TICKS(100)) == pdTRUE)
         {
             GPS_ReadGNRMC(gps_hi2c);
@@ -118,7 +119,12 @@ void GPS_Task(void *pvParameters)
         		DAQ_CAN_Msg_Enqueue(&can_msg_gps);
         	}
         }
-        g_task_entry_count.gps++;
+        g_fault_record.tasks[GPS_TASK].entry_count++;
+        if(g_fault_record.tasks[GPS_TASK].runtime == 0)
+        {
+        	g_fault_record.tasks[GPS_TASK].runtime = xTaskGetTickCount();
+        	g_fault_record.tasks[GPS_TASK].runtime -= g_fault_record.tasks[GPS_TASK].start_tick;
+        }
         vTaskDelayUntil(&xLastWakeTime, 8);
     }
 }

@@ -9,7 +9,7 @@
 adc_median_filter_t adc_filters[DAQ_NO_OF_ADC_SENSORS];
 volatile uint16_t adc_raw_values[DAQ_NO_OF_ADC_SENSORS] = {0,0,0,0,0,0};
 adc_readings_t adc_readings;
-extern daq_task_entry_count_t g_task_entry_count;
+extern daq_fault_record_t g_fault_record;
 
 
 void Median_Init(median_filter_t* this, uint16_t* buffer, uint16_t** pt_buffer_sorted, uint16_t size)
@@ -157,9 +157,10 @@ void ADC_Sensors_Process(volatile uint16_t *raw_adc_values)
 void ADC_Task(void *pvParameters)
 {
 	TickType_t xLastWakeTime;
-    xLastWakeTime = xTaskGetTickCount();
+	xLastWakeTime = xTaskGetTickCount();
 	for( ;; )
     {
+		g_fault_record.tasks[ADC_TASK].start_tick = xTaskGetTickCount();
 		ADC_Sensors_Process(adc_raw_values);
 		for(uint8_t i = 0; i < DAQ_NO_OF_ADC_SENSORS; i++)
 			adc_readings.current[i] = adc_filters[i].filtered_value;
@@ -185,7 +186,12 @@ void ADC_Task(void *pvParameters)
 			for(uint8_t i = 0; i < DAQ_NO_OF_ADC_SENSORS; i++)
 				adc_readings.prev[i] = adc_readings.current[i];
 		}
-		g_task_entry_count.adc++;
+		g_fault_record.tasks[ADC_TASK].entry_count++;
+		if(g_fault_record.tasks[ADC_TASK].runtime == 0)
+		{
+			g_fault_record.tasks[ADC_TASK].runtime = xTaskGetTickCount();
+			g_fault_record.tasks[ADC_TASK].runtime -= g_fault_record.tasks[ADC_TASK].start_tick;
+		}
 		vTaskDelayUntil(&xLastWakeTime, 7);
 	}
 }

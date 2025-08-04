@@ -24,6 +24,7 @@
 /* USER CODE BEGIN Includes */
 #include "DAQ.h"
 #include "core_cm4.h"
+#include "wwdg.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -94,6 +95,7 @@ void NMI_Handler(void)
 void HardFault_Handler(void)
 {
   /* USER CODE BEGIN HardFault_IRQn 0 */
+	HAL_WWDG_Refresh(&hwwdg);
 	__disable_irq();
 	fault_log_t log = {0};
 	log.reset_reason = DAQ_RESET_REASON_HARDFAULT;
@@ -116,6 +118,7 @@ void HardFault_Handler(void)
 void MemManage_Handler(void)
 {
   /* USER CODE BEGIN MemoryManagement_IRQn 0 */
+	HAL_WWDG_Refresh(&hwwdg);
 	__disable_irq();
 	fault_log_t log = {0};
 	log.reset_reason = DAQ_RESET_REASON_MEMMANAGE;
@@ -138,6 +141,7 @@ void MemManage_Handler(void)
 void BusFault_Handler(void)
 {
   /* USER CODE BEGIN BusFault_IRQn 0 */
+	HAL_WWDG_Refresh(&hwwdg);
 	__disable_irq();
 	fault_log_t log = {0};
 	log.reset_reason = DAQ_RESET_REASON_BUSFAULT;
@@ -160,6 +164,7 @@ void BusFault_Handler(void)
 void UsageFault_Handler(void)
 {
   /* USER CODE BEGIN UsageFault_IRQn 0 */
+	HAL_WWDG_Refresh(&hwwdg);
 	__disable_irq();
 	fault_log_t log = {0};
 	log.reset_reason = DAQ_RESET_REASON_USAGEFAULT;
@@ -181,10 +186,10 @@ void UsageFault_Handler(void)
 //void SVC_Handler(void)
 //{
 //  /* USER CODE BEGIN SVCall_IRQn 0 */
-////////////////////////////////////////////
+//////////////////////////////////////////////
 //  /* USER CODE END SVCall_IRQn 0 */
 //  /* USER CODE BEGIN SVCall_IRQn 1 */
-////////////////////////////////////////////
+//////////////////////////////////////////////
 //  /* USER CODE END SVCall_IRQn 1 */
 //}
 
@@ -207,14 +212,14 @@ void DebugMon_Handler(void)
 //void PendSV_Handler(void)
 //{
 //  /* USER CODE BEGIN PendSV_IRQn 0 */
-////////////////////void PendSV_Handler(void)
-////////////////////{
-////////////////////////////////////////////
+//////////////////////void PendSV_Handler(void)
+//////////////////////{
+//////////////////////////////////////////////
 //  /* USER CODE END PendSV_IRQn 0 */
 //  /* USER CODE BEGIN PendSV_IRQn 1 */
-////////////////////////////////////////////
-////////////////////
-////////////////////}
+//////////////////////////////////////////////
+//////////////////////
+//////////////////////}
 //  /* USER CODE END PendSV_IRQn 1 */
 //}
 //
@@ -224,11 +229,11 @@ void DebugMon_Handler(void)
 //void SysTick_Handler(void)
 //{
 //  /* USER CODE BEGIN SysTick_IRQn 0 */
-//////////////////////////////////////////
+////////////////////////////////////////////
 //  /* USER CODE END SysTick_IRQn 0 */
 //
 //  /* USER CODE BEGIN SysTick_IRQn 1 */
-//////////////////////////////////////////
+////////////////////////////////////////////
 //  /* USER CODE END SysTick_IRQn 1 */
 //}
 

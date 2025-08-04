@@ -311,6 +311,6 @@ WWDG.Counter=127
 WWDG.EWIMode=WWDG_EWI_DISABLE
 WWDG.IPParameters=Prescaler,EWIMode,Counter,Window
 WWDG.Prescaler=WWDG_PRESCALER_8
-WWDG.Window=120
+WWDG.Window=127
 board=custom
 isbadioc=false

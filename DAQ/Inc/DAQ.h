@@ -28,24 +28,26 @@ typedef enum{
 }daq_i2c_dma_devices_t;
 
 typedef enum {
-	ADC_TASK = 0,
-	PROX_TASK,
+	PROX_TASK = 0,
 	IMU_TASK,
 	GPS_TASK,
+	ADC_TASK,
 	TEMP_TASK,
 	CAN_TASK,
 	WWDG_TASK
-}daq_task_handles_t;
+}daq_task_handle_t; // arranged according to priority, except for the wwdg task.
 typedef enum{
-	DAQ_FAULT_LOGGING_UNINITIALIZED = 6,
-	DAQ_FAULT_LOGGING_INITIALIZED,
-	DAQ_FAULT_LOGGED,
+	DAQ_BKPSRAM_UNINITIALIZED = 6,
+	DAQ_BKPSRAM_INITIALIZED,
+}daq_bkpsram_state_t;
+typedef enum{
+	DAQ_FAULT_LOGGED = 9,
 	DAQ_FAULT_READ
-}daq_bkpsram_states_t;
-typedef enum{
-	DAQ_BKPSRAM_INIT_WORD = 0,
-	DAQ_BKPSRAM_STATE_WORD
-}daq_bkpsram_words_t;
+}daq_log_status_t;
+typedef struct{
+	daq_bkpsram_state_t bkpsram_state;
+	daq_log_status_t	log_status;
+}daq_status_word_t;
 typedef enum{
 	DAQ_RESET_REASON_NONE = 0,
 	DAQ_RESET_REASON_HARDFAULT = 7,
@@ -53,7 +55,18 @@ typedef enum{
 	DAQ_RESET_REASON_BUSFAULT,
 	DAQ_RESET_REASON_USAGEFAULT,
 	DAQ_RESET_REASON_ERRORHANDLER
-}daq_reset_reasons_t;
+}daq_reset_reason_t;
+typedef enum{
+	DAQ_READ_PREVIOUS_LOG,
+	DAQ_READ_CURRENT_LOG,
+	DAQ_READ_STATUS_WORDS
+}daq_bkpsram_read_type_t;
+typedef enum{
+	DAQ_WRITE_LOG,
+	DAQ_WRITE_BKPSRAM_STATE,
+	DAQ_WRITE_LOG_STATUS,
+	DAQ_CLEAR_CURRENT_LOG
+}daq_bkpsram_write_type_t;
 /**
  * @brief Message to be enqueued in the CAN queue.
  *
@@ -148,30 +161,33 @@ typedef struct{
 	uint8_t  hours;
 	uint16_t counter;
 }daq_timestamp_t;
+
+typedef struct __attribute__((packed)){
+	TickType_t start_tick: 24;
+	TickType_t runtime	: 24;
+	uint32_t entry_count: 5;
+	uint32_t error_count: 3;
+	uint32_t task_kicked: 1;
+}task_stats_t;
+
 typedef struct{
-	uint16_t adc : 2;
-	uint16_t imu : 2;
-	uint16_t gps : 3;
-	uint16_t prox: 3;
-	uint16_t temp: 2;
-	uint16_t can : 4;
-}daq_task_entry_count_t;
-_Static_assert(sizeof(daq_task_entry_count_t) <= 2, "daq_task_entry_count_t must not exceed 2 bytes");
+	task_stats_t tasks[DAQ_NO_OF_READ_TASKS];
+}daq_fault_record_t;
+
 typedef struct __attribute__((packed)) {
     uint8_t reset_reason;
     uint8_t fault_status;
     uint32_t fault_address;
     //uint32_t stack_frame[8]; // suggested future improvement.
-    daq_task_entry_count_t task_entry_count;
+    daq_fault_record_t task_records;
     daq_timestamp_t timestamp;
 }fault_log_t;
-_Static_assert(sizeof(fault_log_t) <= 16, "daq_fault_log_t must not exceed 16 bytes");
+
 typedef struct{
     fault_log_t prev;
     fault_log_t current;
 }daq_fault_log_t;
 
-bool DAQ_Tasks_Valid(BaseType_t returns[DAQ_NO_OF_TASKS]);
 /**
  * @brief Adds one CAN message to the FreeRTOS queue, to be transmitted on CAN bus by the CAN task.
  * @param message Pointer to CAN message object to be enqueued.

@@ -8,7 +8,7 @@
 #include "Temperature_Private.h"
 
 extern SemaphoreHandle_t g_i2c_mutex;
-extern daq_task_entry_count_t g_task_entry_count;
+extern daq_fault_record_t g_fault_record;
 moving_avg_t temp_moving_avgs[TEMP_NO_OF_SENSORS];
 temp_sensor_data_t temp_sensors_data[TEMP_NO_OF_SENSORS];
 temp_readings_t wheel_temps;
@@ -58,6 +58,7 @@ void Temp_Task(void *pvParameters)
 	xLastWakeTime = xTaskGetTickCount();
 	for(;;)
     {
+		g_fault_record.tasks[TEMP_TASK].start_tick = xTaskGetTickCount();
         if (xSemaphoreTake(g_i2c_mutex, pdMS_TO_TICKS(100)) == pdTRUE)
         {
         	//for(uint8_t i = 0; i < TEMP_NO_OF_SENSORS; i++)
@@ -84,7 +85,12 @@ void Temp_Task(void *pvParameters)
         	for(uint8_t i = 0; i < TEMP_NO_OF_SENSORS; i++)
         		wheel_temps.prev[i] = wheel_temps.current[i];
         }
-        g_task_entry_count.temp++;
+        g_fault_record.tasks[TEMP_TASK].entry_count++;
+        if(g_fault_record.tasks[TEMP_TASK].runtime == 0)
+        {
+        	g_fault_record.tasks[TEMP_TASK].runtime = xTaskGetTickCount();
+        	g_fault_record.tasks[TEMP_TASK].runtime -= g_fault_record.tasks[TEMP_TASK].start_tick;
+        }
         vTaskDelayUntil(&xLastWakeTime, 9);
     }
 }

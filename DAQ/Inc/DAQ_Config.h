@@ -22,7 +22,8 @@
 #define DAQ_IMU_RST_GPIO_PORT			GPIOC
 #define DAQ_IMU_RST_PIN					GPIO_PIN_13
 
-#define DAQ_NO_OF_TASKS 				7
+#define DAQ_NO_OF_READ_TASKS			5
+#define DAQ_NO_OF_TASKS 				DAQ_NO_OF_READ_TASKS + 2 // added 2 for the wwdg and can tasks.
 
 #define DAQ_NO_OF_SUSPENSION			4
 #define DAQ_NO_OF_PRESSURE				2
@@ -47,8 +48,14 @@
 #define DAQ_ACCURACY_PRESSURE			1000
 #define DAQ_ACCURACY_TEMP 				10
 
-//#define DAQ_TRACE_RECORDER // Comment if tracing is not needed
+#define DAQ_TRACE_RECORDE // Comment if tracing is not needed
 
 #define DAQ_BKPSRAM_BASE_ADDR			0x40024000
+
+typedef enum{
+	DAQ_MAX_ERROR_COUNT = 5,
+	DAQ_MAX_RUNTIME_TICKS = 5,
+	DAQ_MAX_TOTAL_TICKS_ELAPSED = 10
+}daq_fault_limits_t;
 
 #endif /* DAQ_DAQ_CONFIG_H_ */

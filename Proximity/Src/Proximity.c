@@ -9,7 +9,7 @@ prox_rpms_t prox_wheel_rpms;
 static TIM_HandleTypeDef prox_timer_handle;
 static DMA_HandleTypeDef prox_dma_handles[PROX_NO_OF_WHEELS];
 static uint32_t timer_counters[PROX_NO_OF_WHEELS] = {&TIM3->CCR1, &TIM3->CCR2, &TIM3->CCR3, &TIM3->CCR4};
-extern daq_task_entry_count_t g_task_entry_count;
+extern daq_fault_record_t g_fault_record;
 
 static inline float Prox_GetTimerFreq(void)
 {
@@ -34,6 +34,7 @@ void Prox_Task(void *pvParameters)
     while (1)
     {
         vTaskDelay(7);
+        g_fault_record.tasks[PROX_TASK].start_tick = xTaskGetTickCount();
         for (uint8_t wheel_no = 0; wheel_no < PROX_NO_OF_WHEELS; wheel_no++)
         {
             uint8_t last_reading_index = 0;
@@ -106,6 +107,11 @@ void Prox_Task(void *pvParameters)
         	for(uint8_t i = 0; i < PROX_NO_OF_WHEELS; i++)
         		prox_wheel_rpms.prev[i] = prox_wheel_rpms.current[i];
         }
-        g_task_entry_count.prox++;
+        g_fault_record.tasks[PROX_TASK].entry_count++;
+        if(g_fault_record.tasks[PROX_TASK].runtime == 0)
+        {
+        	g_fault_record.tasks[PROX_TASK].runtime = xTaskGetTickCount();
+        	g_fault_record.tasks[PROX_TASK].runtime -= g_fault_record.tasks[PROX_TASK].start_tick;
+        }
     }
 }
