@@ -164,10 +164,10 @@ typedef struct{
 
 typedef struct __attribute__((packed)){
 	TickType_t start_tick: 24;
-	TickType_t runtime	: 24;
-	uint32_t entry_count: 5;
+	uint32_t entry_count: 4;
 	uint32_t error_count: 3;
 	uint32_t task_kicked: 1;
+	TickType_t runtime	: 24;
 }task_stats_t;
 
 typedef struct{

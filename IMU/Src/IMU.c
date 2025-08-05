@@ -8,6 +8,7 @@
 #include "IMU.h"
 #include "IMU_Private.h"
 #include "wwdg.h"
+#include "math.h"
 
 #ifndef PI
 #define PI 					3.14159265359
@@ -15,7 +16,7 @@
 
 extern SemaphoreHandle_t g_i2c_mutex;
 extern daq_fault_record_t g_fault_record;
-imu_readings_t imu_linear_accels, imu_euler_angles;
+imu_reading_t imu_linear_accels, imu_euler_angles;
 static imu_opmode_t imu_mode;
 
 /*pointer to save sensor I2c configrations prameters*/
@@ -108,6 +109,22 @@ void IMU_SelectRegPage(uint8_t page)
 		IMU_WriteData(BNO055_PAGE_ID_ADDR, page);
 	HAL_Delay(2);
 }
+void IMU_Eulers_Apply_Offset(imu_vector_t* angles)
+{
+	angles->x -= IMU_EULER_ANGLE_OFFSET_X;
+	angles->y -= IMU_EULER_ANGLE_OFFSET_Y;
+}
+void IMU_Transform_Accels(imu_vector_t* accels)
+{
+	static float cosx = cos(IMU_EULER_ANGLE_OFFSET_X);
+	static float cosy = cos(IMU_EULER_ANGLE_OFFSET_Y);
+	static float sinx = sin(IMU_EULER_ANGLE_OFFSET_X);
+	static float siny = sin(IMU_EULER_ANGLE_OFFSET_Y);
+	float x_old = accels->x, y_old = accels->y, z_old = accels->z;
+	accels->x = x_old*cosy + y_old*sinx*siny + z_old*cosx*siny;
+	accels->y = y_old*cosx - z_old*sinx;
+	accels->z = - x_old*siny + y_old*sinx*cosy + z_old*cosx*cosy;
+}
 void IMU_Init(I2C_HandleTypeDef* hi2c, imu_opmode_t mode, imu_axis_map_t map)
 {
 	GlobalConfig = hi2c;
@@ -163,8 +180,8 @@ void IMU_Task(void*pvParameters)
 //			IMU_GetVector(VECTOR_EULER, (float*)&imu_euler_angles.current);
 //			IMU_GetVector(VECTOR_LINEARACCEL, (float*)&imu_linear_accels.current);
 			xSemaphoreGive(g_i2c_mutex);
-			imu_euler_angles.current.x -= IMU_EULER_ANGLE_OFFSET_X;
-			imu_euler_angles.current.y -= IMU_EULER_ANGLE_OFFSET_Y;
+			IMU_Eulers_Apply_Offset(&imu_euler_angles.current);
+			IMU_Transform_Accels(&imu_linear_accels.current);
 		}
 //		if(DAQ_CheckChange(imu_euler_angles.current.x, imu_euler_angles.prev.x, DAQ_MIN_CHANGE_IMU_ANGLE_X) ||
 //		   DAQ_CheckChange(imu_euler_angles.current.y, imu_euler_angles.prev.y, DAQ_MIN_CHANGE_IMU_ANGLE_Y) ||

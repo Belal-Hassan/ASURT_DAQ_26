@@ -131,7 +131,7 @@ typedef struct{
 typedef struct{
 	imu_vector_t prev;
 	imu_vector_t current;
-}imu_readings_t;
+}imu_reading_t;
 
 void IMU_Init(I2C_HandleTypeDef* hi2c, imu_opmode_t mode, imu_axis_map_t map);
 void IMU_Task(void *pvParameters);
@@ -140,6 +140,8 @@ void IMU_GetVector(imu_vector_type_t vector_type , float* xyz);
 void IMU_WriteData(uint8_t reg, uint8_t data);
 void IMU_SetAxisMap(imu_axis_map_t axis);
 void IMU_SelectRegPage(uint8_t page);
+void IMU_Eulers_Apply_Offset(imu_vector_t* angles);
+void IMU_Transform_Accels(imu_vector_t* accels);
 
 
 #endif /* INC_IMU_H_ */
