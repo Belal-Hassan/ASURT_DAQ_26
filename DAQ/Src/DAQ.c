@@ -24,13 +24,13 @@ void DAQ_BKPSRAM_Read(void* readTo, daq_bkpsram_read_type_t type)
 	switch(type)
 	{
 		case DAQ_READ_PREVIOUS_LOG:
-			memcpy(readTo, (void*)(DAQ_BKPSRAM_BASE_ADDR + sizeof(daq_status_word_t) + sizeof(fault_log_t)), sizeof(fault_log_t));
+			memcpy(readTo, (void*)(DAQ_BKPSRAM_BASE_ADDR + sizeof(daq_status_words_t) + sizeof(fault_log_t)), sizeof(fault_log_t));
 			break;
 		case DAQ_READ_CURRENT_LOG:
-			memcpy(readTo, (void*)(DAQ_BKPSRAM_BASE_ADDR + sizeof(daq_status_word_t)), sizeof(fault_log_t));
+			memcpy(readTo, (void*)(DAQ_BKPSRAM_BASE_ADDR + sizeof(daq_status_words_t)), sizeof(fault_log_t));
 			break;
 		case DAQ_READ_STATUS_WORDS:
-			memcpy(readTo, (void*)DAQ_BKPSRAM_BASE_ADDR, sizeof(daq_status_word_t));
+			memcpy(readTo, (void*)DAQ_BKPSRAM_BASE_ADDR, sizeof(daq_status_words_t));
 			break;
 		default:
 			break;
@@ -38,15 +38,15 @@ void DAQ_BKPSRAM_Read(void* readTo, daq_bkpsram_read_type_t type)
 }
 void DAQ_BKPSRAM_Write(void* toWrite, daq_bkpsram_write_type_t type)
 {
-	daq_status_word_t* status = (daq_status_word_t*) toWrite;
+	daq_status_words_t* status = (daq_status_words_t*) toWrite;
 	switch(type)
 	{
 		case DAQ_WRITE_LOG:
-			memcpy((void*)(DAQ_BKPSRAM_BASE_ADDR + sizeof(daq_status_word_t)), toWrite, sizeof(fault_log_t));
-			memcpy((void*)(DAQ_BKPSRAM_BASE_ADDR + sizeof(daq_status_word_t) + sizeof(fault_log_t)), toWrite, sizeof(fault_log_t));
+			memcpy((void*)(DAQ_BKPSRAM_BASE_ADDR + sizeof(daq_status_words_t)), toWrite, sizeof(fault_log_t));
+			memcpy((void*)(DAQ_BKPSRAM_BASE_ADDR + sizeof(daq_status_words_t) + sizeof(fault_log_t)), toWrite, sizeof(fault_log_t));
 			break;
 		case DAQ_CLEAR_CURRENT_LOG:
-			memset((void*)(DAQ_BKPSRAM_BASE_ADDR + sizeof(daq_status_word_t)), 0, sizeof(fault_log_t));
+			memset((void*)(DAQ_BKPSRAM_BASE_ADDR + sizeof(daq_status_words_t)), 0, sizeof(fault_log_t));
 			break;
 		case DAQ_WRITE_BKPSRAM_STATE:
 			memcpy((void*)(DAQ_BKPSRAM_BASE_ADDR), &(status->bkpsram_state), sizeof(daq_bkpsram_state_t));
@@ -77,7 +77,7 @@ void DAQ_FaultLog_Init(void)
 	SCB->SHCSR |= SCB_SHCSR_MEMFAULTENA_Msk
 		       |  SCB_SHCSR_BUSFAULTENA_Msk
 		       |  SCB_SHCSR_USGFAULTENA_Msk;
-	daq_status_word_t status = {.bkpsram_state = DAQ_BKPSRAM_INITIALIZED};
+	daq_status_words_t status = {.bkpsram_state = DAQ_BKPSRAM_INITIALIZED};
 	DAQ_BKPSRAM_Write(&status, DAQ_WRITE_BKPSRAM_STATE);
 }
 
@@ -92,7 +92,7 @@ BaseType_t DAQ_CAN_Msg_Dequeue(daq_can_msg_t* msg)
 daq_fault_log_t DAQ_FaultLog_Read(void)
 {
 	daq_fault_log_t log = {0};
-	daq_status_word_t status = {0};
+	daq_status_words_t status = {0};
 	DAQ_BKPSRAM_Read(&log.prev, DAQ_READ_PREVIOUS_LOG);
 	DAQ_BKPSRAM_Read(&status, DAQ_READ_STATUS_WORDS);
 	if(status.bkpsram_state == DAQ_BKPSRAM_INITIALIZED && status.log_status == DAQ_FAULT_LOGGED)
@@ -106,7 +106,7 @@ daq_fault_log_t DAQ_FaultLog_Read(void)
 }
 void DAQ_FaultLog_Write(fault_log_t log)
 {
-	daq_status_word_t status = {0};
+	daq_status_words_t status = {0};
 	DAQ_BKPSRAM_Read(&status, DAQ_READ_STATUS_WORDS);
 	if(status.bkpsram_state == DAQ_BKPSRAM_INITIALIZED)
 	{

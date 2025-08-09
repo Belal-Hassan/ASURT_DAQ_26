@@ -40,7 +40,7 @@ typedef struct{
 typedef struct{
 	float prev[TEMP_NO_OF_SENSORS];
 	float current[TEMP_NO_OF_SENSORS];
-}temp_readings_t;
+}temp_reading_buffer_t;
 
 
 float Moving_Avg(float next_num, uint8_t sensor_index);

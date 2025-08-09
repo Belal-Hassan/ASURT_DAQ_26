@@ -24,6 +24,7 @@
 #include "i2c.h"
 #include "spi.h"
 #include "tim.h"
+#include "usart.h"
 #include "wwdg.h"
 #include "gpio.h"
 
@@ -65,7 +66,7 @@ SemaphoreHandle_t g_i2c_mutex;
 CAN_TxHeaderTypeDef can_tx_header;
 
 bool g_i2c_dma_flags[DAQ_NO_OF_I2C_DMA_DEVICES];
-daq_i2c_dma_devices_t g_i2c_dma_device = I2C_DMA_NO_DEVICE;
+daq_i2c_dma_device_t g_i2c_dma_device = I2C_DMA_NO_DEVICE;
 extern DMA_HandleTypeDef hdma_tim3_ch1_trig, hdma_tim3_ch2, hdma_tim3_ch3, hdma_tim3_ch4_up;
 DMA_HandleTypeDef *proximity_dma_handlers[4] = {&hdma_tim3_ch1_trig, &hdma_tim3_ch2, &hdma_tim3_ch3, &hdma_tim3_ch4_up};
 
@@ -78,13 +79,13 @@ imu_axis_map_t imu_axis_map = {
   .z_sign = BNO055_AXIS_SIGN_POSITIVE
 };
 
-size_t x,y,z;
+//size_t x,y,z;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 /* USER CODE BEGIN PFP */
-void Task1Blink(void *pvParameters)
+void Normal_Blink(void *pvParameters)
 {
     for(;;)
     {
@@ -173,7 +174,7 @@ void vSnapshotTask(void *pv)
         vTaskDelay(pdMS_TO_TICKS(1000));
         vTraceStop();
         int x = 0;
-        //Error_Handler();
+        Error_Handler(); // Disable WWDG by commenting the MX_WWDG_Init function.
     }
 }
 #endif
@@ -224,6 +225,8 @@ int main(void)
   MX_SPI1_Init();
   MX_TIM3_Init();
   MX_WWDG_Init();
+  MX_UART4_Init();
+  MX_UART5_Init();
   /* USER CODE BEGIN 2 */
   g_i2c_mutex  = xSemaphoreCreateMutex();
   if (g_i2c_mutex == NULL)
@@ -247,7 +250,7 @@ int main(void)
 	 g_fault_log.current.reset_reason == DAQ_RESET_REASON_ERRORHANDLER)
 	  xTaskCreate(Fault_Blink	, "Fault_Blink"	, 64, NULL, 1, NULL);
   else
-	  xTaskCreate(Task1Blink	, "Blink1"		, 64, NULL, 1, NULL);
+	  xTaskCreate(Normal_Blink	, "Blink1"		, 64, NULL, 1, NULL);
   for(uint8_t i = 0; i < DAQ_NO_OF_READ_TASKS; i++)
 	  g_fault_record.tasks[i].error_count = g_fault_log.current.task_records.tasks[i].error_count;
 

@@ -46,7 +46,7 @@ typedef struct{
 typedef struct{
 	uint16_t prev[DAQ_NO_OF_ADC_SENSORS];
 	uint16_t current[DAQ_NO_OF_ADC_SENSORS];
-}adc_readings_t;
+}adc_reading_buffer_t;
 
 void Median_Init(median_filter_t* this, uint16_t* buffer, uint16_t** pt_buffer_sorted, uint16_t size);
 uint16_t Median_Filter(median_filter_t* this, uint16_t input);

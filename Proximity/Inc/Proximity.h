@@ -28,7 +28,7 @@ typedef enum {
 typedef struct{
 	double prev[PROX_NO_OF_WHEELS];
 	double current[PROX_NO_OF_WHEELS];
-}prox_rpms_t;
+}prox_rpm_buffer_t;
 
 void Prox_Init(TIM_HandleTypeDef *htim, DMA_HandleTypeDef* hdma[4]);
 void Prox_Task(void *pvParameters);

@@ -26,6 +26,7 @@ typedef struct {
     double longitude;   // Degrees
     char lon_dir;       // E/W
 } gps_gnrmc_data_t;
+
 void GPS_Init(I2C_HandleTypeDef *hi2c);
 void GPS_ReadGNRMC(I2C_HandleTypeDef *hi2c);
 void GPS_ParseGNRMC(gps_gnrmc_data_t *data);

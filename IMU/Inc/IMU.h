@@ -131,7 +131,7 @@ typedef struct{
 typedef struct{
 	imu_vector_t prev;
 	imu_vector_t current;
-}imu_reading_t;
+}imu_reading_buffer_t;
 
 void IMU_Init(I2C_HandleTypeDef* hi2c, imu_opmode_t mode, imu_axis_map_t map);
 void IMU_Task(void *pvParameters);

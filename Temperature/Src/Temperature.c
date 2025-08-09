@@ -11,7 +11,7 @@ extern SemaphoreHandle_t g_i2c_mutex;
 extern daq_fault_record_t g_fault_record;
 moving_avg_t temp_moving_avgs[TEMP_NO_OF_SENSORS];
 temp_sensor_data_t temp_sensors_data[TEMP_NO_OF_SENSORS];
-temp_readings_t wheel_temps;
+temp_reading_buffer_t temp_buffer;
 static I2C_HandleTypeDef* temp_hi2c;
 
 
@@ -65,25 +65,25 @@ void Temp_Task(void *pvParameters)
         	//	Temp_ReadRaw(i);
             xSemaphoreGive(g_i2c_mutex);
             for(uint8_t i = 0; i < TEMP_NO_OF_SENSORS; i++)
-            	wheel_temps.current[i] = Temp_Process(i);
+            	temp_buffer.current[i] = Temp_Process(i);
         }
-//        if(DAQ_CheckChange(wheel_temps.current[TEMP_FRONT_LEFT], wheel_temps.prev[TEMP_FRONT_LEFT], DAQ_MIN_CHANGE_TEMP)  	||
-//           DAQ_CheckChange(wheel_temps.current[TEMP_FRONT_RIGHT], wheel_temps.prev[TEMP_FRONT_RIGHT], DAQ_MIN_CHANGE_TEMP) 	||
-//		   DAQ_CheckChange(wheel_temps.current[TEMP_REAR_LEFT], wheel_temps.prev[TEMP_REAR_LEFT], DAQ_MIN_CHANGE_TEMP) 	  	||
-//		   DAQ_CheckChange(wheel_temps.current[TEMP_REAR_RIGHT], wheel_temps.prev[TEMP_REAR_RIGHT], DAQ_MIN_CHANGE_TEMP))
+//        if(DAQ_CheckChange(temp_buffer.current[TEMP_FRONT_LEFT], temp_buffer.prev[TEMP_FRONT_LEFT], DAQ_MIN_CHANGE_TEMP)  	||
+//           DAQ_CheckChange(temp_buffer.current[TEMP_FRONT_RIGHT], temp_buffer.prev[TEMP_FRONT_RIGHT], DAQ_MIN_CHANGE_TEMP) 	||
+//		   DAQ_CheckChange(temp_buffer.current[TEMP_REAR_LEFT], temp_buffer.prev[TEMP_REAR_LEFT], DAQ_MIN_CHANGE_TEMP) 	  	||
+//		   DAQ_CheckChange(temp_buffer.current[TEMP_REAR_RIGHT], temp_buffer.prev[TEMP_REAR_RIGHT], DAQ_MIN_CHANGE_TEMP))
         {
         	daq_can_msg_t can_msg_temp = {0};
         	daq_can_msg_temp_t encoder_msg_temp = {0};
         	can_msg_temp.id = DAQ_CAN_ID_TEMP;
-        	encoder_msg_temp.temp_front_left = (uint16_t)(wheel_temps.current[TEMP_FRONT_LEFT] * DAQ_ACCURACY_TEMP);
-        	encoder_msg_temp.temp_front_right= (uint16_t)(wheel_temps.current[TEMP_FRONT_RIGHT] * DAQ_ACCURACY_TEMP);
-        	encoder_msg_temp.temp_rear_left  = (uint16_t)(wheel_temps.current[TEMP_REAR_LEFT] * DAQ_ACCURACY_TEMP);
-        	encoder_msg_temp.temp_rear_right = (uint16_t)(wheel_temps.current[TEMP_REAR_RIGHT] * DAQ_ACCURACY_TEMP);
+        	encoder_msg_temp.temp_front_left = (uint16_t)(temp_buffer.current[TEMP_FRONT_LEFT] * DAQ_ACCURACY_TEMP);
+        	encoder_msg_temp.temp_front_right= (uint16_t)(temp_buffer.current[TEMP_FRONT_RIGHT] * DAQ_ACCURACY_TEMP);
+        	encoder_msg_temp.temp_rear_left  = (uint16_t)(temp_buffer.current[TEMP_REAR_LEFT] * DAQ_ACCURACY_TEMP);
+        	encoder_msg_temp.temp_rear_right = (uint16_t)(temp_buffer.current[TEMP_REAR_RIGHT] * DAQ_ACCURACY_TEMP);
         	can_msg_temp.size = 8;
         	can_msg_temp.data = *((uint64_t*)&encoder_msg_temp);
         	DAQ_CAN_Msg_Enqueue(&can_msg_temp);
         	for(uint8_t i = 0; i < TEMP_NO_OF_SENSORS; i++)
-        		wheel_temps.prev[i] = wheel_temps.current[i];
+        		temp_buffer.prev[i] = temp_buffer.current[i];
         }
         g_fault_record.tasks[TEMP_TASK].entry_count++;
         if(g_fault_record.tasks[TEMP_TASK].runtime == 0)

@@ -16,7 +16,7 @@
 
 extern SemaphoreHandle_t g_i2c_mutex;
 extern daq_fault_record_t g_fault_record;
-imu_reading_t imu_linear_accels, imu_euler_angles;
+imu_reading_buffer_t imu_accels_buffer, imu_angles_buffer;
 static imu_opmode_t imu_mode;
 
 /*pointer to save sensor I2c configrations prameters*/
@@ -177,45 +177,45 @@ void IMU_Task(void*pvParameters)
 		g_fault_record.tasks[IMU_TASK].start_tick = xTaskGetTickCount();
 		if (xSemaphoreTake(g_i2c_mutex, pdMS_TO_TICKS(100)) == pdTRUE)
 		{
-//			IMU_GetVector(VECTOR_EULER, (float*)&imu_euler_angles.current);
-//			IMU_GetVector(VECTOR_LINEARACCEL, (float*)&imu_linear_accels.current);
+//			IMU_GetVector(VECTOR_EULER, (float*)&imu_angles_buffer.current);
+//			IMU_GetVector(VECTOR_LINEARACCEL, (float*)&imu_accels_buffer.current);
 			xSemaphoreGive(g_i2c_mutex);
-			IMU_Eulers_Apply_Offset(&imu_euler_angles.current);
-			IMU_Transform_Accels(&imu_linear_accels.current);
+			IMU_Eulers_Apply_Offset(&imu_angles_buffer.current);
+			IMU_Transform_Accels(&imu_accels_buffer.current);
 		}
-//		if(DAQ_CheckChange(imu_euler_angles.current.x, imu_euler_angles.prev.x, DAQ_MIN_CHANGE_IMU_ANGLE_X) ||
-//		   DAQ_CheckChange(imu_euler_angles.current.y, imu_euler_angles.prev.y, DAQ_MIN_CHANGE_IMU_ANGLE_Y) ||
-//		   DAQ_CheckChange(imu_euler_angles.current.z, imu_euler_angles.prev.z, DAQ_MIN_CHANGE_IMU_ANGLE_Z))
+//		if(DAQ_CheckChange(imu_angles_buffer.current.x, imu_angles_buffer.prev.x, DAQ_MIN_CHANGE_IMU_ANGLE_X) ||
+//		   DAQ_CheckChange(imu_angles_buffer.current.y, imu_angles_buffer.prev.y, DAQ_MIN_CHANGE_IMU_ANGLE_Y) ||
+//		   DAQ_CheckChange(imu_angles_buffer.current.z, imu_angles_buffer.prev.z, DAQ_MIN_CHANGE_IMU_ANGLE_Z))
 		{
 			daq_can_msg_t can_msg_imu_angle = {0};
 			daq_can_msg_imu_t encoder_msg_imu_angle = {0};
-			encoder_msg_imu_angle.x = (int16_t)(imu_euler_angles.current.x * DAQ_ACCURACY_IMU_ANGLE_X);
-			encoder_msg_imu_angle.y = (int16_t)(imu_euler_angles.current.y * DAQ_ACCURACY_IMU_ANGLE_Y);
-			encoder_msg_imu_angle.z = (int16_t)(imu_euler_angles.current.z * DAQ_ACCURACY_IMU_ANGLE_Z);
+			encoder_msg_imu_angle.x = (int16_t)(imu_angles_buffer.current.x * DAQ_ACCURACY_IMU_ANGLE_X);
+			encoder_msg_imu_angle.y = (int16_t)(imu_angles_buffer.current.y * DAQ_ACCURACY_IMU_ANGLE_Y);
+			encoder_msg_imu_angle.z = (int16_t)(imu_angles_buffer.current.z * DAQ_ACCURACY_IMU_ANGLE_Z);
 			can_msg_imu_angle.id = DAQ_CAN_ID_IMU_ANGLE;
 			can_msg_imu_angle.size = 8;
 			can_msg_imu_angle.data = *((uint64_t*)(&encoder_msg_imu_angle));
 			DAQ_CAN_Msg_Enqueue(&can_msg_imu_angle);
-			imu_euler_angles.prev.x = imu_euler_angles.current.x;
-			imu_euler_angles.prev.y = imu_euler_angles.current.y;
-			imu_euler_angles.prev.z = imu_euler_angles.current.z;
+			imu_angles_buffer.prev.x = imu_angles_buffer.current.x;
+			imu_angles_buffer.prev.y = imu_angles_buffer.current.y;
+			imu_angles_buffer.prev.z = imu_angles_buffer.current.z;
 		}
-//		if(DAQ_CheckChange(imu_linear_accels.current.x, imu_linear_accels.prev.x, DAQ_MIN_CHANGE_IMU_ACCEL) ||
-//		   DAQ_CheckChange(imu_linear_accels.current.y, imu_linear_accels.prev.y, DAQ_MIN_CHANGE_IMU_ACCEL) ||
-//		   DAQ_CheckChange(imu_linear_accels.current.z, imu_linear_accels.prev.z, DAQ_MIN_CHANGE_IMU_ACCEL))
+//		if(DAQ_CheckChange(imu_accels_buffer.current.x, imu_accels_buffer.prev.x, DAQ_MIN_CHANGE_IMU_ACCEL) ||
+//		   DAQ_CheckChange(imu_accels_buffer.current.y, imu_accels_buffer.prev.y, DAQ_MIN_CHANGE_IMU_ACCEL) ||
+//		   DAQ_CheckChange(imu_accels_buffer.current.z, imu_accels_buffer.prev.z, DAQ_MIN_CHANGE_IMU_ACCEL))
 		{
 			daq_can_msg_t can_msg_imu_acceleration = {0};
 			daq_can_msg_imu_t encoder_msg_imu_acceleration = {0};
-			encoder_msg_imu_acceleration.x = (int16_t)(imu_linear_accels.current.x * DAQ_ACCURACY_IMU_ANGLE_X);
-			encoder_msg_imu_acceleration.y = (int16_t)(imu_linear_accels.current.y * DAQ_ACCURACY_IMU_ANGLE_Y);
-			encoder_msg_imu_acceleration.z = (int16_t)(imu_linear_accels.current.z * DAQ_ACCURACY_IMU_ANGLE_Z);
+			encoder_msg_imu_acceleration.x = (int16_t)(imu_accels_buffer.current.x * DAQ_ACCURACY_IMU_ANGLE_X);
+			encoder_msg_imu_acceleration.y = (int16_t)(imu_accels_buffer.current.y * DAQ_ACCURACY_IMU_ANGLE_Y);
+			encoder_msg_imu_acceleration.z = (int16_t)(imu_accels_buffer.current.z * DAQ_ACCURACY_IMU_ANGLE_Z);
 			can_msg_imu_acceleration.id = DAQ_CAN_ID_IMU_ACCEL;
 			can_msg_imu_acceleration.size = 8;
 			can_msg_imu_acceleration.data = *((uint64_t*)(&encoder_msg_imu_acceleration));
 			DAQ_CAN_Msg_Enqueue(&can_msg_imu_acceleration);
-			imu_linear_accels.prev.x = imu_linear_accels.current.x;
-			imu_linear_accels.prev.y = imu_linear_accels.current.y;
-			imu_linear_accels.prev.z = imu_linear_accels.current.z;
+			imu_accels_buffer.prev.x = imu_accels_buffer.current.x;
+			imu_accels_buffer.prev.y = imu_accels_buffer.current.y;
+			imu_accels_buffer.prev.z = imu_accels_buffer.current.z;
 		}
 		//for(uint64_t i = 0; i < 6000000; i++);
 		g_fault_record.tasks[IMU_TASK].entry_count++;
