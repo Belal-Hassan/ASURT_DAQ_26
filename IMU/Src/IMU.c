@@ -15,7 +15,7 @@
 #endif /* PI */
 
 extern SemaphoreHandle_t g_i2c_mutex;
-extern daq_fault_record_t g_fault_record;
+extern daq_fault_record_t g_daq_fault_record;
 imu_reading_buffer_t imu_accels_buffer, imu_angles_buffer;
 static imu_opmode_t imu_mode;
 
@@ -174,7 +174,7 @@ void IMU_Task(void*pvParameters)
 	xLastWakeTime = xTaskGetTickCount();
 	for( ;; )
 	{
-		g_fault_record.tasks[IMU_TASK].start_tick = xTaskGetTickCount();
+		g_daq_fault_record.tasks[IMU_TASK].start_tick = xTaskGetTickCount();
 		if (xSemaphoreTake(g_i2c_mutex, pdMS_TO_TICKS(100)) == pdTRUE)
 		{
 //			IMU_GetVector(VECTOR_EULER, (float*)&imu_angles_buffer.current);
@@ -218,12 +218,9 @@ void IMU_Task(void*pvParameters)
 			imu_accels_buffer.prev.z = imu_accels_buffer.current.z;
 		}
 		//for(uint64_t i = 0; i < 6000000; i++);
-		g_fault_record.tasks[IMU_TASK].entry_count++;
-		if(g_fault_record.tasks[IMU_TASK].runtime == 0)
-		{
-			g_fault_record.tasks[IMU_TASK].runtime = xTaskGetTickCount();
-			g_fault_record.tasks[IMU_TASK].runtime -= g_fault_record.tasks[IMU_TASK].start_tick;
-		}
+		g_daq_fault_record.tasks[IMU_TASK].entry_count++;
+		g_daq_fault_record.tasks[IMU_TASK].end_tick = xTaskGetTickCount();
+		g_daq_fault_record.tasks[IMU_TASK].runtime = g_daq_fault_record.tasks[IMU_TASK].end_tick - g_daq_fault_record.tasks[IMU_TASK].start_tick;
 		vTaskDelayUntil(&xLastWakeTime, 8);
 	}
 }

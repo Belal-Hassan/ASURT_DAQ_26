@@ -72,6 +72,10 @@ extern uint32_t SystemCoreClock;
 #define configENABLE_FPU 				1
 #define configUSE_APPLICATION_TASK_TAG  1
 
+/**
+ * @addtogroup Trace_Module
+ * @{
+ */
 #ifdef DAQ_TRACE_RECORDER
 	#define configUSE_TRACE_FACILITY				1
 	#define configUSE_STATS_FORMATTING_FUNCTIONS    1
@@ -85,6 +89,7 @@ extern uint32_t SystemCoreClock;
 	#define configUSE_STATS_FORMATTING_FUNCTIONS	0
 	#define configGENERATE_RUN_TIME_STATS			0
 #endif
+/** @}*/
 /* Co-routine definitions. */
 #define configUSE_CO_ROUTINES 		0
 #define configMAX_CO_ROUTINE_PRIORITIES ( 2 )

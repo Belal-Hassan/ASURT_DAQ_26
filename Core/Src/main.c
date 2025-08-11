@@ -57,8 +57,7 @@
 
 /* USER CODE BEGIN PV */
 daq_timestamp_t g_timestamp;
-daq_fault_log_t g_fault_log;
-daq_fault_record_t g_fault_record;
+daq_fault_log_buffer_t g_fault_log_buffer;
 
 TaskHandle_t task_handles[DAQ_NO_OF_TASKS];
 SemaphoreHandle_t g_i2c_mutex;
@@ -67,6 +66,7 @@ CAN_TxHeaderTypeDef can_tx_header;
 
 bool g_i2c_dma_flags[DAQ_NO_OF_I2C_DMA_DEVICES];
 daq_i2c_dma_device_t g_i2c_dma_device = I2C_DMA_NO_DEVICE;
+extern daq_fault_record_t g_daq_fault_record;
 extern DMA_HandleTypeDef hdma_tim3_ch1_trig, hdma_tim3_ch2, hdma_tim3_ch3, hdma_tim3_ch4_up;
 DMA_HandleTypeDef *proximity_dma_handlers[4] = {&hdma_tim3_ch1_trig, &hdma_tim3_ch2, &hdma_tim3_ch3, &hdma_tim3_ch4_up};
 
@@ -93,91 +93,68 @@ void Normal_Blink(void *pvParameters)
         HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_5);
     }
 }
-void Fault_Blink(void *pvParameters)
-{
-    for(;;)
-    {
-    	vTaskDelay(20);
-        HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_5);
-    }
-}
-void WWDG_Task(void *pvParameters)
-{
-	uint8_t initial = 3;
-	bool runtime_max_error;
-	TickType_t current_tick;
-	for(;;)
-	{
-		vTaskDelay(pdMS_TO_TICKS(60));
-		if(initial || ( (g_fault_record.tasks[ADC_TASK].entry_count || g_fault_record.tasks[ADC_TASK].task_kicked) &&
-						(g_fault_record.tasks[PROX_TASK].entry_count||g_fault_record.tasks[PROX_TASK].task_kicked) &&
-						(g_fault_record.tasks[IMU_TASK].entry_count || g_fault_record.tasks[IMU_TASK].task_kicked) &&
-						(g_fault_record.tasks[GPS_TASK].entry_count || g_fault_record.tasks[GPS_TASK].task_kicked) &&
-						(g_fault_record.tasks[TEMP_TASK].entry_count||g_fault_record.tasks[TEMP_TASK].task_kicked) ))
-		{
-			if(initial)
-				initial--;
-			HAL_WWDG_Refresh(&hwwdg);
-			for(uint8_t i = 0; i < DAQ_NO_OF_READ_TASKS; i++)
-			{
-				g_fault_record.tasks[i].entry_count = 0;
-				g_fault_record.tasks[i].runtime = 0;
-			}
-		}
-		else
-		{
-			HAL_WWDG_Refresh(&hwwdg);
-			current_tick = xTaskGetTickCount();
-			runtime_max_error = 0;
-			for(uint8_t i = 0; i < DAQ_NO_OF_READ_TASKS; i++)
-			{
-				if(g_fault_record.tasks[i].runtime > DAQ_MAX_RUNTIME_TICKS && !g_fault_record.tasks[i].task_kicked)
-				{
-					runtime_max_error = 1;
-					g_fault_record.tasks[i].error_count++;
-					break;
-				}
-			}
-			if(!runtime_max_error)
-			{
-				for(uint8_t i = 0; i < DAQ_NO_OF_READ_TASKS; i++)
-				{
-					if(current_tick - g_fault_record.tasks[i].start_tick > DAQ_MAX_TOTAL_TICKS_ELAPSED && !g_fault_record.tasks[i].task_kicked)
-					{
-						g_fault_record.tasks[i].error_count++;
-						break;
-					}
-				}
-			}
-			Error_Handler();
-		}
-	}
-}
+/**
+ * @addtogroup Trace_Module
+ * @{
+ */
+
+/**
+ * @brief Initializes the runtime cycle counter for profiling.
+ *
+ * Enables the DWT cycle counter if not already enabled. This counter
+ * is used to measure CPU cycle counts for runtime statistics.
+ */
 #ifdef DAQ_TRACE_RECORDER
 void vInitRunTimeStats(void)
 {
+	/* Check if Trace Enable bit is not set in the Debug Exception and Monitor Control Register (DEMCR) */
     if(!(CoreDebug->DEMCR & CoreDebug_DEMCR_TRCENA_Msk))
     {
-        CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
-        DWT->CYCCNT = 0;
-        DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
+        CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk; //Enable trace and debug blocks by setting the TRCENA bit.
+        DWT->CYCCNT = 0; // Clear the cycle count.
+        DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk; //Enable the cycle counter by setting the CYCCNTENA bit in the DWT Control Register.
     }
 }
+/**
+ * @brief Returns the current value of the runtime cycle counter.
+ *
+ * @return Current DWT cycle count value.
+ */
 uint32_t ulGetRunTimeCounterValue(void)
 {
-    return DWT->CYCCNT;
+    return DWT->CYCCNT; // Return the cycle count.
 }
+/**
+ * @brief Task that periodically stops trace recording and triggers an error handler.
+ *
+ * Runs indefinitely, delaying 1000 ms between iterations. Stops tracing and calls
+ * `Error_Handler()`. WWDG should be disabled when using this task to prevent resets.
+ * A breakpoint could also be used instead of calling the `Error_Handler()`
+ *
+ * @param pv Unused parameter.
+ */
 void vSnapshotTask(void *pv)
 {
     while(1)
     {
         vTaskDelay(pdMS_TO_TICKS(1000));
-        vTraceStop();
-        int x = 0;
-        Error_Handler(); // Disable WWDG by commenting the MX_WWDG_Init function.
+        vTraceStop(); // The snapshot is taken.
+        Error_Handler(); // Note: Disable WWDG by commenting the MX_WWDG_Init function.
     }
 }
+/**
+ * @brief Initializes the trace recorder by setting up runtime stats and creating snapshot task.
+ *
+ * it initializes the runtime stats, enables tracing, and creates the snapshot task.
+ */
+void TraceRecorder_Init(void)
+{
+    vInitRunTimeStats();
+    vTraceEnable(TRC_START);
+    xTaskCreate(vSnapshotTask, "Trace_Task", 128, NULL, 1, NULL);
+}
 #endif
+/** @}*/
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -210,9 +187,7 @@ int main(void)
 
   /* USER CODE BEGIN SysInit */
 #ifdef DAQ_TRACE_RECORDER
-  vInitRunTimeStats();
-  vTraceEnable(TRC_START);
-  xTaskCreate(vSnapshotTask	, "Trace_Task" , 128, NULL, 1, NULL);
+  TraceRecorder_Init();
 #endif
   /* USER CODE END SysInit */
 
@@ -241,45 +216,55 @@ int main(void)
   DAQ_CAN_Init(&hcan1, &can_tx_header);
 
   DAQ_FaultLog_Init();
-  g_fault_log = DAQ_FaultLog_Read();
+  g_fault_log_buffer = DAQ_FaultLog_Read();
 
-  if(g_fault_log.current.reset_reason == DAQ_RESET_REASON_HARDFAULT ||
-     g_fault_log.current.reset_reason == DAQ_RESET_REASON_MEMMANAGE ||
-	 g_fault_log.current.reset_reason == DAQ_RESET_REASON_BUSFAULT  ||
-	 g_fault_log.current.reset_reason == DAQ_RESET_REASON_USAGEFAULT||
-	 g_fault_log.current.reset_reason == DAQ_RESET_REASON_ERRORHANDLER)
-	  xTaskCreate(Fault_Blink	, "Fault_Blink"	, 64, NULL, 1, NULL);
+  if(g_fault_log_buffer.current.reset_reason > DAQ_RESET_REASON_MIN &&
+	 g_fault_log_buffer.current.reset_reason < DAQ_RESET_REASON_MAX)
+	  xTaskCreate(DAQ_Fault_Blink, "Fault_Blink"	, 64, NULL, 1, NULL);
   else
 	  xTaskCreate(Normal_Blink	, "Blink1"		, 64, NULL, 1, NULL);
   for(uint8_t i = 0; i < DAQ_NO_OF_READ_TASKS; i++)
-	  g_fault_record.tasks[i].error_count = g_fault_log.current.task_records.tasks[i].error_count;
+	  g_daq_fault_record.tasks[i].error_count = g_fault_log_buffer.current.task_records.tasks[i].error_count;
 
-  if(g_fault_record.tasks[PROX_TASK].error_count < DAQ_MAX_ERROR_COUNT)
+  if(g_daq_fault_record.tasks[PROX_TASK].error_count < DAQ_MAX_ERROR_COUNT)
   	  xTaskCreate(Prox_Task	, "Prox_Task", 256	, NULL, 8, &task_handles[PROX_TASK]);
   else
-	  g_fault_record.tasks[PROX_TASK].task_kicked = 1;
-  if(g_fault_record.tasks[IMU_TASK].error_count < DAQ_MAX_ERROR_COUNT)
+  {
+	  xTaskCreate(Prox_Task	, "Prox_Task", 256	, NULL, 0, &task_handles[PROX_TASK]);
+	  g_daq_fault_record.tasks[PROX_TASK].task_demoted = 1;
+  }
+  if(g_daq_fault_record.tasks[IMU_TASK].error_count < DAQ_MAX_ERROR_COUNT)
 	  xTaskCreate(IMU_Task	, "IMU_Task" , 256	, NULL, 7, &task_handles[IMU_TASK]);
   else
-	  g_fault_record.tasks[IMU_TASK].task_kicked = 1;
-  if(g_fault_record.tasks[GPS_TASK].error_count < DAQ_MAX_ERROR_COUNT)
+  {
+	  xTaskCreate(IMU_Task	, "IMU_Task" , 256	, NULL, 0, &task_handles[IMU_TASK]);
+	  g_daq_fault_record.tasks[IMU_TASK].task_demoted = 1;
+  }
+  if(g_daq_fault_record.tasks[GPS_TASK].error_count < DAQ_MAX_ERROR_COUNT)
   	  xTaskCreate(GPS_Task	, "GPS_task" , 256	, NULL, 6, &task_handles[GPS_TASK]);
   else
-	  g_fault_record.tasks[GPS_TASK].task_kicked = 1;
-  if(g_fault_record.tasks[ADC_TASK].error_count < DAQ_MAX_ERROR_COUNT)
+  {
+	  xTaskCreate(GPS_Task	, "GPS_task" , 256	, NULL, 0, &task_handles[GPS_TASK]);
+	  g_daq_fault_record.tasks[GPS_TASK].task_demoted = 1;
+  }
+  if(g_daq_fault_record.tasks[ADC_TASK].error_count < DAQ_MAX_ERROR_COUNT)
 	  xTaskCreate(ADC_Task	, "ADC_Task" , 256	, NULL, 5, &task_handles[ADC_TASK]);
   else
-	  g_fault_record.tasks[ADC_TASK].task_kicked = 1;
-  if(g_fault_record.tasks[TEMP_TASK].error_count < DAQ_MAX_ERROR_COUNT)
+  {
+	  xTaskCreate(ADC_Task	, "ADC_Task" , 256	, NULL, 0, &task_handles[ADC_TASK]);
+	  g_daq_fault_record.tasks[ADC_TASK].task_demoted = 1;
+  }
+  if(g_daq_fault_record.tasks[TEMP_TASK].error_count < DAQ_MAX_ERROR_COUNT)
 	  xTaskCreate(Temp_Task	, "Temp_task", 256 	, NULL, 4, &task_handles[TEMP_TASK]);
   else
-	  g_fault_record.tasks[TEMP_TASK].task_kicked = 1;
+  {
+	  xTaskCreate(Temp_Task	, "Temp_task", 256 	, NULL, 0, &task_handles[TEMP_TASK]);
+	  g_daq_fault_record.tasks[TEMP_TASK].task_demoted = 1;
+  }
   xTaskCreate(DAQ_CAN_Task	, "CAN_task" , 128	, NULL, 3, &task_handles[CAN_TASK]);
-  xTaskCreate(WWDG_Task		, "WWDG_task", 128	, NULL, 9, &task_handles[WWDG_TASK]);
+  xTaskCreate(DAQ_WWDG_Task	, "WWDG_task", 128	, NULL, 9, &task_handles[WWDG_TASK]);
 
   HAL_WWDG_Refresh(&hwwdg);
-
-  //xTaskCreate(Task, "Task", 64, NULL, 1, NULL);
 
   vTaskStartScheduler();
   /* USER CODE END 2 */
@@ -407,7 +392,7 @@ void Error_Handler(void)
   HAL_WWDG_Refresh(&hwwdg);
   fault_log_t log = {0};
   log.reset_reason = DAQ_RESET_REASON_ERRORHANDLER;
-  log.task_records = g_fault_record;
+  log.task_records = g_daq_fault_record;
   log.timestamp = g_timestamp;
   DAQ_FaultLog_Write(log);
   while (1)

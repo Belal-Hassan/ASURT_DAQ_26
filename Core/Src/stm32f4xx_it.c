@@ -46,7 +46,7 @@
 /* USER CODE BEGIN PV */
 extern I2C_HandleTypeDef hi2c1;
 extern daq_timestamp_t g_timestamp;
-extern daq_fault_record_t g_fault_record;
+extern daq_fault_record_t g_daq_fault_record;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -101,8 +101,7 @@ void HardFault_Handler(void)
 	fault_log_t log = {0};
 	log.reset_reason = DAQ_RESET_REASON_HARDFAULT;
 	log.fault_status = SCB->HFSR;
-	log.fault_address = 0;
-	log.task_records = g_fault_record;
+	log.task_records = g_daq_fault_record;
 	log.timestamp = g_timestamp;
 	DAQ_FaultLog_Write(log);
   /* USER CODE END HardFault_IRQn 0 */
@@ -125,7 +124,7 @@ void MemManage_Handler(void)
 	log.reset_reason = DAQ_RESET_REASON_MEMMANAGE;
 	log.fault_status = SCB->CFSR & 0x000000FF;
 	log.fault_address = SCB->MMFAR;
-	log.task_records = g_fault_record;
+	log.task_records = g_daq_fault_record;
 	log.timestamp = g_timestamp;
 	DAQ_FaultLog_Write(log);
   /* USER CODE END MemoryManagement_IRQn 0 */
@@ -148,7 +147,7 @@ void BusFault_Handler(void)
 	log.reset_reason = DAQ_RESET_REASON_BUSFAULT;
 	log.fault_status = SCB->CFSR & 0x0000FF00;
 	log.fault_address = SCB->BFAR;
-	log.task_records = g_fault_record;
+	log.task_records = g_daq_fault_record;
 	log.timestamp = g_timestamp;
 	DAQ_FaultLog_Write(log);
   /* USER CODE END BusFault_IRQn 0 */
@@ -170,7 +169,7 @@ void UsageFault_Handler(void)
 	fault_log_t log = {0};
 	log.reset_reason = DAQ_RESET_REASON_USAGEFAULT;
 	log.fault_status = SCB->CFSR & 0xFFFF0000;
-	log.task_records = g_fault_record;
+	log.task_records = g_daq_fault_record;
 	log.timestamp = g_timestamp;
 	DAQ_FaultLog_Write(log);
   /* USER CODE END UsageFault_IRQn 0 */
@@ -184,15 +183,15 @@ void UsageFault_Handler(void)
 /**
   * @brief This function handles System service call via SWI instruction.
   */
-//void SVC_Handler(void)
-//{
-//  /* USER CODE BEGIN SVCall_IRQn 0 */
+void SVC_Handler(void)
+{
+  /* USER CODE BEGIN SVCall_IRQn 0 */
 ////////////////////////////////////////////////
-//  /* USER CODE END SVCall_IRQn 0 */
-//  /* USER CODE BEGIN SVCall_IRQn 1 */
+  /* USER CODE END SVCall_IRQn 0 */
+  /* USER CODE BEGIN SVCall_IRQn 1 */
 ////////////////////////////////////////////////
-//  /* USER CODE END SVCall_IRQn 1 */
-//}
+  /* USER CODE END SVCall_IRQn 1 */
+}
 
 /**
   * @brief This function handles Debug monitor.
@@ -210,33 +209,33 @@ void DebugMon_Handler(void)
 /**
   * @brief This function handles Pendable request for system service.
   */
-//void PendSV_Handler(void)
-//{
-//  /* USER CODE BEGIN PendSV_IRQn 0 */
+void PendSV_Handler(void)
+{
+  /* USER CODE BEGIN PendSV_IRQn 0 */
 ////////////////////////void PendSV_Handler(void)
 ////////////////////////{
 ////////////////////////////////////////////////
-//  /* USER CODE END PendSV_IRQn 0 */
-//  /* USER CODE BEGIN PendSV_IRQn 1 */
+  /* USER CODE END PendSV_IRQn 0 */
+  /* USER CODE BEGIN PendSV_IRQn 1 */
 ////////////////////////////////////////////////
 ////////////////////////
 ////////////////////////}
-//  /* USER CODE END PendSV_IRQn 1 */
-//}
+  /* USER CODE END PendSV_IRQn 1 */
+}
 
 /**
   * @brief This function handles System tick timer.
   */
-//void SysTick_Handler(void)
-//{
-//  /* USER CODE BEGIN SysTick_IRQn 0 */
+void SysTick_Handler(void)
+{
+  /* USER CODE BEGIN SysTick_IRQn 0 */
 //////////////////////////////////////////////
-//  /* USER CODE END SysTick_IRQn 0 */
-//
-//  /* USER CODE BEGIN SysTick_IRQn 1 */
+  /* USER CODE END SysTick_IRQn 0 */
+
+  /* USER CODE BEGIN SysTick_IRQn 1 */
 //////////////////////////////////////////////
-//  /* USER CODE END SysTick_IRQn 1 */
-//}
+  /* USER CODE END SysTick_IRQn 1 */
+}
 
 /******************************************************************************/
 /* STM32F4xx Peripheral Interrupt Handlers                                    */

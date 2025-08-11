@@ -8,7 +8,7 @@
 #include "Temperature_Private.h"
 
 extern SemaphoreHandle_t g_i2c_mutex;
-extern daq_fault_record_t g_fault_record;
+extern daq_fault_record_t g_daq_fault_record;
 moving_avg_t temp_moving_avgs[TEMP_NO_OF_SENSORS];
 temp_sensor_data_t temp_sensors_data[TEMP_NO_OF_SENSORS];
 temp_reading_buffer_t temp_buffer;
@@ -58,7 +58,7 @@ void Temp_Task(void *pvParameters)
 	xLastWakeTime = xTaskGetTickCount();
 	for(;;)
     {
-		g_fault_record.tasks[TEMP_TASK].start_tick = xTaskGetTickCount();
+		g_daq_fault_record.tasks[TEMP_TASK].start_tick = xTaskGetTickCount();
         if (xSemaphoreTake(g_i2c_mutex, pdMS_TO_TICKS(100)) == pdTRUE)
         {
         	//for(uint8_t i = 0; i < TEMP_NO_OF_SENSORS; i++)
@@ -85,12 +85,9 @@ void Temp_Task(void *pvParameters)
         	for(uint8_t i = 0; i < TEMP_NO_OF_SENSORS; i++)
         		temp_buffer.prev[i] = temp_buffer.current[i];
         }
-        g_fault_record.tasks[TEMP_TASK].entry_count++;
-        if(g_fault_record.tasks[TEMP_TASK].runtime == 0)
-        {
-        	g_fault_record.tasks[TEMP_TASK].runtime = xTaskGetTickCount();
-        	g_fault_record.tasks[TEMP_TASK].runtime -= g_fault_record.tasks[TEMP_TASK].start_tick;
-        }
+        g_daq_fault_record.tasks[TEMP_TASK].entry_count++;
+        g_daq_fault_record.tasks[TEMP_TASK].end_tick = xTaskGetTickCount();
+        g_daq_fault_record.tasks[TEMP_TASK].runtime = g_daq_fault_record.tasks[TEMP_TASK].end_tick - g_daq_fault_record.tasks[TEMP_TASK].start_tick;
         vTaskDelayUntil(&xLastWakeTime, 9);
     }
 }

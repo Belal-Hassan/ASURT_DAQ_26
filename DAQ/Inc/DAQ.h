@@ -19,13 +19,26 @@
 #include "stm32f446xx.h"
 #include "stm32f4xx_hal.h"
 
+#define PACKED __attribute__((packed))
 /* CAN */
 
+/**
+ * @brief used in handling I2C DMA interrupts.
+ *
+ * The handling principle is similar to that of a semaphore, and uses defered processing.
+ *
+ */
 typedef enum{
 	I2C_DMA_NO_DEVICE = 0,
 	I2C_DMA_GPS
 }daq_i2c_dma_device_t;
-
+/**
+ * @brief Contains all main tasks
+ *
+ * Tasks are arranged according to priority, except for the `WWDG_Task`.
+ * It's used in task handlers, fault records, and other task-related arrays.
+ *
+ */
 typedef enum {
 	PROX_TASK = 0,
 	IMU_TASK,
@@ -34,99 +47,212 @@ typedef enum {
 	TEMP_TASK,
 	CAN_TASK,
 	WWDG_TASK
-}daq_task_handle_t; // arranged according to priority, except for the wwdg task.
+}daq_task_handle_t;
+
+/** @addtogroup Fault_Module
+ *  @{
+ */
+
+//see the group definition and details at ./docs/html/adoxes/fault.dox
 
 /**
- * @defgroup Fault_Module Fault Logging Group
- * @brief Encoding/decoding logic for CAN messages.
+ * @brief Backup SRAM states.
  *
- * This group contains all structures and functions used in encoding
- * and queuing sensors' readings to be transmitted via the CAN bus.
- * All readings are encoded to the `daq_can_msg_t::data`.
+ * This state is saved as the 1st word of the backup SRAM.
+ * @note Choosing 6 to be the first value of the enum is arbitrary.
+ * Anything other than 0 (as it could be 0 without setting it)
+ * would work fine.
  *
- * @note See the implementation file for full encoding/decoding algorithm details.
- * @{
  */
 typedef enum{
 	DAQ_BKPSRAM_UNINITIALIZED = 6,
 	DAQ_BKPSRAM_INITIALIZED,
 }daq_bkpsram_state_t;
+/**
+ * @brief Fault Logging statuses.
+ *
+ * This status is saved as the 2nd word of the backup SRAM.
+ * @note Choosing 9 to be the first value of the enum is arbitrary.
+ * Anything other than 0 (as it could be 0 without setting it)
+ * would work fine
+ */
 typedef enum{
 	DAQ_FAULT_LOGGED = 9,
 	DAQ_FAULT_READ
 }daq_log_status_t;
-typedef struct{
-	daq_bkpsram_state_t bkpsram_state;
-	daq_log_status_t	log_status;
-}daq_status_words_t;
+/**
+ * @brief Includes the various software reset reasons.
+ *
+ * It's saved as `fault_log_t::reset_reason`
+ * @note Choosing 7 to be the first value of the enum is arbitrary.
+ * Anything other than 0 (as it could be 0 without setting it)
+ * would work fine
+ */
 typedef enum{
 	DAQ_RESET_REASON_NONE = 0,
+	DAQ_RESET_REASON_MIN,
 	DAQ_RESET_REASON_HARDFAULT = 7,
 	DAQ_RESET_REASON_MEMMANAGE,
 	DAQ_RESET_REASON_BUSFAULT,
 	DAQ_RESET_REASON_USAGEFAULT,
-	DAQ_RESET_REASON_ERRORHANDLER
+	DAQ_RESET_REASON_ERRORHANDLER,
+	DAQ_RESET_REASON_TASKFAULTHANDLER,
+	DAQ_RESET_REASON_MAX
 }daq_reset_reason_t;
+/**
+ * @brief The first 2 words of the backup SRAM used in fault logging.
+ *
+ * @note a variable of an enum type, by default, has the same size as an `int`.
+ * Therefore, each of these is a whole word.
+ */
+typedef struct{
+	daq_bkpsram_state_t bkpsram_state;
+	daq_log_status_t	log_status;
+}daq_status_words_t;
+/**
+ * @brief Includes the types of read operations used by the `DAQ_FaultLog_Read` function.
+ *
+ */
 typedef enum{
 	DAQ_READ_PREVIOUS_LOG,
 	DAQ_READ_CURRENT_LOG,
 	DAQ_READ_STATUS_WORDS
 }daq_bkpsram_read_type_t;
+/**
+ * @brief Includes the types of write operations used by the `DAQ_FaultLog_Write` function.
+ *
+ */
 typedef enum{
 	DAQ_WRITE_LOG,
 	DAQ_WRITE_BKPSRAM_STATE,
 	DAQ_WRITE_LOG_STATUS,
 	DAQ_CLEAR_CURRENT_LOG
 }daq_bkpsram_write_type_t;
-
+/**
+ * @brief Format for the DAQ system timestamp.
+ * @note The counter depends on the frequency of the timer it will be used with.
+ */
 typedef struct{
 	uint8_t  seconds;
 	uint8_t  minutes;
 	uint8_t  hours;
 	uint16_t counter;
 }daq_timestamp_t;
-
-typedef struct __attribute__((packed)){
-	TickType_t start_tick: 24;
-	uint32_t entry_count: 4;
-	uint32_t error_count: 3;
-	uint32_t task_kicked: 1;
-	TickType_t runtime	: 24;
-}task_stats_t;
-
+/**
+ * @brief A struct for task stats needed for fault detection and logging.
+ *
+ */
+typedef struct {
+	TickType_t start_tick: 24; /*!< Saves the RTOS tick the task started with (Could be used with any other tick). */
+	uint32_t entry_count: 4; /*!< Counts the number of times a task has been executed till its end. */
+	uint32_t error_count: 3; /*!< Counts the number of errors the task has caused. */
+	uint32_t task_demoted: 1; /*!< Set to 1 if the task was kicked from the system (ie the error count reached `DAQ_MAX_ERROR_COUNT`). */
+	TickType_t end_tick : 24;/*!< Saves the RTOS tick the task ended with (Could be used with any other tick). */
+	TickType_t runtime	: 8; /*!< Holds the time taken for the task to get executed (in ticks). */
+} task_stats_t;
+/**
+ * @brief A struct for each task's stats needed for fault detection and logging.
+ *
+ */
 typedef struct{
 	task_stats_t tasks[DAQ_NO_OF_READ_TASKS];
 }daq_fault_record_t;
-
-typedef struct __attribute__((packed)) {
-    uint8_t reset_reason;
-    uint8_t fault_status;
-    uint32_t fault_address;
-    //uint32_t stack_frame[8]; // suggested future improvement.
-    daq_fault_record_t task_records;
-    daq_timestamp_t timestamp;
-}fault_log_t;
-
+/**
+ * @brief Contains all fault info to be logged to or read from the backup SRAM.
+ *
+ */
+typedef struct PACKED {
+    uint8_t reset_reason; /*!< One of the reset reasons in `daq_reset_reason_t`. */
+    uint8_t fault_status; /*!< Stores the fault status from the register `SCB->CFSR`. */
+    uint32_t fault_address; /*!< Stores the fault address from the fault address registers in `SCB`. */
+    //uint32_t stack_frame[8]; /*!< Suggested future improvement */
+    daq_fault_record_t task_records; /*!< Stores all tasks' fault record */
+    daq_timestamp_t timestamp; /*!< Stores the global timestamp of the DAQ system. */
+} fault_log_t;
+/**
+ * @brief A buffer type for storing the previous and current faults.
+ *
+ */
 typedef struct{
-    fault_log_t prev;
-    fault_log_t current;
-}daq_fault_log_t;
-
+    fault_log_t prev; /*!< The last successfully captured fault on the backup SRAM. */
+    fault_log_t current; /*!< The current read fault on the backup SRAM. */
+}daq_fault_log_buffer_t;
+/**
+ * @brief Initializes the backup SRAM and Fault Handlers.
+ *
+ */
 void DAQ_FaultLog_Init(void);
-
-daq_fault_log_t DAQ_FaultLog_Read(void);
+/**
+ * @brief Reads the previous and current fault logs from the backup SRAM.
+ * @return The read fault log buffer.
+ *
+ * @note After the function successfully reads the current fault log, it
+ * clears it so as not to be redundantly read again.
+ */
+daq_fault_log_buffer_t DAQ_FaultLog_Read(void);
+/**
+ * @brief Writes the received fault log as the current and previous fault logs on the backup SRAM.
+ * @param log the log to be written.
+ *
+ * The function writes the log 2 times, one on the current, and the other on the previous.
+ */
 void DAQ_FaultLog_Write(fault_log_t log);
+/**
+ * @brief An RTOS task responsible for checking up on the system and catching errors.
+ *
+ * This task is where the tasks' error detection takes place. It runs
+ * once every 60ms, and if a task is found to be affecting the rest of the system
+ * (e.g. blocking other tasks), this task will detect the faulty task, increase its
+ * error counter, and, finally, call the @ref DAQ_Task_Fault_Handler.
+ *
+ * @note The WWDG gets triggered after about 110ms in this system.
+ */
+void DAQ_WWDG_Task(void *pvParameters);
+/**
+ * @brief Logs the fault info and stalls the system until a WWDG reset occurs.
+ *
+ */
+void DAQ_Task_Fault_Handler(void);
+/**
+ * @brief When a fault occurs, this task is created as a warning.
+ *
+ */
+void DAQ_Fault_Blink(void *pvParameters);
 /** @} */
 
 /**
  * @defgroup CAN_Module CAN Messages Group
  * @brief Encoding/decoding logic for CAN messages.
  *
- * This group contains all structures and functions used in encoding
- * and queuing sensors' readings to be transmitted via the CAN bus.
- * All readings are encoded to the `daq_can_msg_t::data`.
+ * This group contains all defines, enums, structs and functions used in
+ * encoding and queuing sensors' readings to be transmitted via the CAN bus.
+ * All readings are encoded to `daq_can_msg_t::data`.
  *
- * @note See the implementation file for full encoding/decoding algorithm details.
+ * ## Encoded & Decoding Algorithm
+ * To encode messages the following simple, yet effective, algorithm is used:
+ * \code
+ * daq_can_msg_xyz_t to_encode = {.a = A, .b = B,};
+ * daq_can_msg_t msg = {0};
+ * msg.data = *((uint64_t*)&to_encode);
+ * \endcode
+ * And to decode, the opposite is done:
+ * \code
+ * daq_can_msg_t msg = {0};
+ * CAN_Receive(&msg);
+ * daq_can_msg_xyz_t decoded = *((daq_can_msg_xyz_t*)&msg.data);
+ * \endcode
+ * This works by:
+ * - Taking the address of the source struct (`to_encode` or `msg.data`).
+ * - Casting that pointer to a pointer of the target type (`uint64_t*` or `daq_can_msg_xyz_t*`).
+ * - Dereferencing the cast pointer to obtain the packed or unpacked data.
+ *
+ * @attention
+ * - This method assumes a **little-endian** architecture and consistent compiler behavior. It may not be portable across different platforms.
+ * - To ensure safe and predictable encoding/decoding, structs **must have a fixed size and layout** matching exactly 8 bytes (the size of `uint64_t`), and
+ * that's why `static_assert` is used.
+ * - Compilers may add **implicit padding** for alignment, so **manual padding** fields should be added as needed.
+ * - Misaligned or differently padded structs will cause incorrect data encoding and decoding, potentially corrupting transmitted data.
+ *
  * @{
  */
 
@@ -177,8 +303,9 @@ typedef struct
     int16_t x; /*!< x-component of either linear acceleration or Euler angle. */
     int16_t y; /*!< y-component of either linear acceleration or Euler angle. */
     int16_t z; /*!< z-component of either linear acceleration or Euler angle. */
+    uint16_t _padding; // Manual padding for predictable alignment.
 } daq_can_msg_imu_t;
-static_assert(sizeof(daq_can_msg_imu_t) <= 8, "IMU CAN Message must not exceed 8 bytes");
+static_assert(sizeof(daq_can_msg_imu_t) == 8, "IMU CAN Message must be 8 bytes");
 /**
  * @brief Format for encoding ADC Sensors readings for transmission via CAN.
  *
@@ -195,8 +322,9 @@ typedef struct
 
     uint64_t pressure_rear_left 	: 10;
     uint64_t pressure_rear_right 	: 10;
+    uint64_t _padding: 4; // Manual padding for predictable alignment.
 } daq_can_msg_adc_t;
-static_assert(sizeof(daq_can_msg_adc_t) <= 8, "ADC CAN Message must not exceed 8 bytes");
+static_assert(sizeof(daq_can_msg_adc_t) == 8, "ADC CAN Message must be 8 bytes");
 /**
  * @brief Format for encoding Proximity Speed readings for transmission via CAN.
  *
@@ -216,7 +344,7 @@ typedef struct
     uint64_t encoder_angle 	: 10;
     uint64_t Speedkmh 		: 8;
 } daq_can_msg_prox_t;
-static_assert(sizeof(daq_can_msg_prox_t) <= 8, "Proximity CAN Message must not exceed 8 bytes");
+static_assert(sizeof(daq_can_msg_prox_t) == 8, "Proximity CAN Message must be 8 bytes");
 /**
  * @brief Format for encoding GPS readings for transmission via CAN.
  *
@@ -227,7 +355,7 @@ typedef struct
     float latitude;
     float longitude;
 } daq_can_msg_gps_t;
-static_assert(sizeof(daq_can_msg_gps_t) <= 8, "GPS CAN Message must not exceed 8 bytes");
+static_assert(sizeof(daq_can_msg_gps_t) == 8, "GPS CAN Message must be 8 bytes");
 /**
  * @brief Format for encoding Temperature readings for transmission via CAN.
  *
@@ -243,7 +371,7 @@ typedef struct
     uint16_t temp_rear_left;
     uint16_t temp_rear_right;
 } daq_can_msg_temp_t;
-static_assert(sizeof(daq_can_msg_temp_t) <= 8, "Temperature CAN Message must not exceed 8 bytes");
+static_assert(sizeof(daq_can_msg_temp_t) == 8, "Temperature CAN Message must be 8 bytes");
 /**
  * @brief Initializes the CAN task by starting CAN communication and setting the can_tx_header.
  *
@@ -262,7 +390,7 @@ void DAQ_CAN_Msg_Enqueue(daq_can_msg_t* msg);
 /**
  * @brief Dequeues a CAN message of type `daq_can_msg_t` from the FreeRTOS CAN queue.
  *
- * @param msg Pointer the variable in which the received CAN message (from the queue) will be stored.
+ * @param msg Pointer to the variable in which the received CAN message (from the queue) will be stored.
  * @return `pdTRUE` if successfully executed
  * @attention This function should only be used in CAN task. If the queue is empty, it will block the task until the queue is not empty.
  *
