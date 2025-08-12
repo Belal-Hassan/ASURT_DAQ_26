@@ -9,6 +9,7 @@
 #define SRC_DAQ_BKPSRAM_PRIVATE_H_
 
 #include "DAQ.h"
+
 /**
  * @addtogroup Fault_Module
  * @{

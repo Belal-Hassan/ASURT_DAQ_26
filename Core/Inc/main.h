@@ -31,11 +31,14 @@ extern "C" {
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+/*============================= STANDARD INCLUDES =============================*/
 #include <stdbool.h>
 #include <math.h>
 #include <string.h>
 #include <stdlib.h>
+/*=============================================================================*/
 
+/*============================= FREERTOS INCLUDES =============================*/
 #include "FreeRTOS.h"
 #include "task.h"
 #include "semphr.h"
@@ -43,6 +46,7 @@ extern "C" {
 #include "timers.h"
 #include "event_groups.h"
 #include "trcRecorder.h"
+/*=============================================================================*/
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/
@@ -70,30 +74,7 @@ void Error_Handler(void);
 /* Private defines -----------------------------------------------------------*/
 
 /* USER CODE BEGIN Private defines */
-//#define Travel_1_Pin GPIO_PIN_0
-//#define Travel_1_GPIO_Port GPIOC
-//#define Travel_2_Pin GPIO_PIN_1
-//#define Travel_2_GPIO_Port GPIOC
-//#define ENCODER_CH1_Pin GPIO_PIN_0
-//#define ENCODER_CH1_GPIO_Port GPIOA
-//#define ENCODER_CH2_Pin GPIO_PIN_1
-//#define ENCODER_CH2_GPIO_Port GPIOA
-//#define Travel_3_Pin GPIO_PIN_6
-//#define Travel_3_GPIO_Port GPIOA
-//#define Travel_4_Pin GPIO_PIN_7
-//#define Travel_4_GPIO_Port GPIOA
-//#define REAR_RIGHT_WHEEL_Pin GPIO_PIN_8
-//#define REAR_RIGHT_WHEEL_GPIO_Port GPIOA
-//#define REAR_LEFT_WHEEL_Pin GPIO_PIN_9
-//#define REAR_LEFT_WHEEL_GPIO_Port GPIOA
-//#define FRONT_LEFT_WHEEL_Pin GPIO_PIN_10
-//#define FRONT_LEFT_WHEEL_GPIO_Port GPIOA
-//#define FRONT_RIGHT_WHEEL_Pin GPIO_PIN_11
-//#define FRONT_RIGHT_WHEEL_GPIO_Port GPIOA
-//#define IMU_SCL_Pin GPIO_PIN_6
-//#define IMU_SCL_GPIO_Port GPIOB
-//#define IMU_SDA_Pin GPIO_PIN_7
-//#define IMU_SDA_GPIO_Port GPIOB
+
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus

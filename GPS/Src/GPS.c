@@ -6,15 +6,16 @@
  */
 #include "GPS.h"
 
-extern SemaphoreHandle_t g_i2c_mutex;
-extern daq_fault_record_t g_daq_fault_record;
-extern daq_i2c_dma_device_t g_i2c_dma_device;
-extern bool g_i2c_dma_flags[DAQ_NO_OF_I2C_DMA_DEVICES];
-char gps_i2c_buffer[45];
-gps_gnrmc_data_t gps_data;
-static I2C_HandleTypeDef* gps_hi2c;
+extern SemaphoreHandle_t g_i2c_mutex;                 // Global I2C mutex for thread-safe access across tasks
+extern daq_fault_record_t g_daq_fault_record;         // Global fault record structure for DAQ system
+extern daq_i2c_dma_device_t g_i2c_dma_device;         // Global I2C-DMA device configuration/instance
+extern bool g_i2c_dma_flags[DAQ_NO_OF_I2C_DMA_DEVICES]; // Flags array indicating I2C-DMA device status
 
-/*=================Static functions declerations====================*/
+char gps_i2c_buffer[45];                              // Raw GPS data buffer read over I2C (max 45 bytes)
+gps_gnrmc_data_t gps_data;                            // Parsed GPS GNRMC sentence data (time, position, speed, etc.)
+static I2C_HandleTypeDef* gps_hi2c;                   // Pointer to the I2C handle used for GPS communication
+
+/*============================== STATIC FUNCTIONS ==============================*/
 /**
  * @addtogroup GPS_Module
  * @{
@@ -71,6 +72,7 @@ static double convertToDegrees(char *rawValue)
     return deg + (min / 60.0);            // Convert minutes to decimal degrees and sum
 }
 /** @}*/
+/*===========================================================================*/
 
 void GPS_Init(I2C_HandleTypeDef *hi2c)
 {

@@ -8,16 +8,23 @@
 #ifndef DAQ_DAQ_H_
 #define DAQ_DAQ_H_
 
+/*============================= STANDARD INCLUDES =============================*/
 #include <stdint.h>
 #include <assert.h>
-#include "main.h"
-#include "DAQ_Config.h"
-/* =========================================== FREERTOS INCLUDES =========================================== */
+/*=============================================================================*/
+
+/*============================= FREERTOS INCLUDES =============================*/
 #include "FreeRTOS.h"
 #include "queue.h"
-/* =========================================== STM32HAL INCLUDES =========================================== */
+/*=============================================================================*/
+
+/*============================= STM32HAL INCLUDES =============================*/
 #include "stm32f446xx.h"
 #include "stm32f4xx_hal.h"
+/*=============================================================================*/
+
+#include "main.h"
+#include "DAQ_Config.h"
 
 #define PACKED __attribute__((packed))
 /* CAN */
@@ -221,38 +228,7 @@ void DAQ_Fault_Blink(void *pvParameters);
 /** @} */
 
 /**
- * @defgroup CAN_Module CAN Messages Group
- * @brief Encoding/decoding logic for CAN messages.
- *
- * This group contains all defines, enums, structs and functions used in
- * encoding and queuing sensors' readings to be transmitted via the CAN bus.
- * All readings are encoded to `daq_can_msg_t::data`.
- *
- * ## Encoded & Decoding Algorithm
- * To encode messages the following simple, yet effective, algorithm is used:
- * \code
- * daq_can_msg_xyz_t to_encode = {.a = A, .b = B,};
- * daq_can_msg_t msg = {0};
- * msg.data = *((uint64_t*)&to_encode);
- * \endcode
- * And to decode, the opposite is done:
- * \code
- * daq_can_msg_t msg = {0};
- * CAN_Receive(&msg);
- * daq_can_msg_xyz_t decoded = *((daq_can_msg_xyz_t*)&msg.data);
- * \endcode
- * This works by:
- * - Taking the address of the source struct (`to_encode` or `msg.data`).
- * - Casting that pointer to a pointer of the target type (`uint64_t*` or `daq_can_msg_xyz_t*`).
- * - Dereferencing the cast pointer to obtain the packed or unpacked data.
- *
- * @attention
- * - This method assumes a **little-endian** architecture and consistent compiler behavior. It may not be portable across different platforms.
- * - To ensure safe and predictable encoding/decoding, structs **must have a fixed size and layout** matching exactly 8 bytes (the size of `uint64_t`), and
- * that's why `static_assert` is used.
- * - Compilers may add **implicit padding** for alignment, so **manual padding** fields should be added as needed.
- * - Misaligned or differently padded structs will cause incorrect data encoding and decoding, potentially corrupting transmitted data.
- *
+ * @addtogroup CAN_Module
  * @{
  */
 

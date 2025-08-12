@@ -4,11 +4,22 @@
 
 #include "proximity.h"
 
+// DMA capture buffer for proximity sensor pulses (per wheel)
 uint16_t prox_dma_buffer[PROX_NO_OF_WHEELS][PROX_DMA_WHEEL_BUFFER_SIZE];
+
+// Stores calculated RPM values and related timing data
 prox_rpm_buffer_t prox_rpm_buffer;
+
+// Timer handle for proximity measurement timing
 static TIM_HandleTypeDef prox_timer_handle;
+
+// DMA channel handles for each wheel’s proximity sensor
 static DMA_HandleTypeDef prox_dma_handles[PROX_NO_OF_WHEELS];
+
+// Direct pointers to timer capture/compare registers for each wheel channel
 static uint32_t timer_counters[PROX_NO_OF_WHEELS] = {&TIM3->CCR1, &TIM3->CCR2, &TIM3->CCR3, &TIM3->CCR4};
+
+// Shared DAQ fault record structure
 extern daq_fault_record_t g_daq_fault_record;
 
 static inline float Prox_GetTimerFreq(void)

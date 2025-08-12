@@ -16,11 +16,12 @@
 
 extern SemaphoreHandle_t g_i2c_mutex;
 extern daq_fault_record_t g_daq_fault_record;
-imu_reading_buffer_t imu_accels_buffer, imu_angles_buffer;
-static imu_opmode_t imu_mode;
 
-/*pointer to save sensor I2c configrations prameters*/
-static I2C_HandleTypeDef* GlobalConfig = NULL;
+imu_reading_buffer_t imu_accels_buffer, imu_angles_buffer; // Angle and Acceleration buffers.
+
+static imu_opmode_t imu_mode; // The global (in this file) mode of operation of the IMU.
+static I2C_HandleTypeDef* GlobalConfig = NULL; //pointer to save sensor I2C handle.
+
 
 void IMU_SetMode(imu_opmode_t mode)
 {
@@ -32,11 +33,10 @@ void IMU_SetMode(imu_opmode_t mode)
 void IMU_GetVector(imu_vector_type_t vector_type , float* xyz)
 {
 
-  uint8_t buffer[6];
-  memset(buffer, 0, 6);
+  uint8_t buffer[6] = {0};
 
-  int16_t x, y, z;
-  x = y = z = 0;
+  int16_t x = 0, y = 0, z = 0;
+
 
   /* Read vector data (6 bytes) */
   HAL_I2C_Mem_Read(GlobalConfig , IMU_I2C_ADDRESS , (adafruit_bno055_reg_t)vector_type , 1 , buffer , 6 , 20);
@@ -89,8 +89,6 @@ void IMU_GetVector(imu_vector_type_t vector_type , float* xyz)
     break;
   }
 }
-
-/*========================External Functions========================*/
 void IMU_WriteData(uint8_t reg, uint8_t data)
 {
 	HAL_I2C_Mem_Write(GlobalConfig , IMU_I2C_ADDRESS , reg , 1 , &data , 1 , 20);
@@ -116,11 +114,16 @@ void IMU_Eulers_Apply_Offset(imu_vector_t* angles)
 }
 void IMU_Transform_Accels(imu_vector_t* accels)
 {
+	// Calculated once at the beginning of the program.
 	static float cosx = cos(IMU_EULER_ANGLE_OFFSET_X);
 	static float cosy = cos(IMU_EULER_ANGLE_OFFSET_Y);
 	static float sinx = sin(IMU_EULER_ANGLE_OFFSET_X);
 	static float siny = sin(IMU_EULER_ANGLE_OFFSET_Y);
+
+	// Store initial readings because there's more than 1 edit operation.
 	float x_old = accels->x, y_old = accels->y, z_old = accels->z;
+
+	// Apply the linear transformation (See the documentation for details).
 	accels->x = x_old*cosy + y_old*sinx*siny + z_old*cosx*siny;
 	accels->y = y_old*cosx - z_old*sinx;
 	accels->z = - x_old*siny + y_old*sinx*cosy + z_old*cosx*cosy;
@@ -137,11 +140,12 @@ void IMU_Init(I2C_HandleTypeDef* hi2c, imu_opmode_t mode, imu_axis_map_t map)
 	status = HAL_I2C_Mem_Write(GlobalConfig, IMU_I2C_ADDRESS, BNO055_SYS_TRIGGER_ADDR, 1, &Data, 1, 20);
 	if (status != HAL_OK)
 		return;
-	//HAL_Delay(650); // Per datasheet, reset takes ~650ms
+
+	// 650ms delay, but with WWDG Refresh to prevent a reset.
 	for(uint8_t i = 0; i < 13; i++)
 	{
-		HAL_Delay(50);
 		HAL_WWDG_Refresh(&hwwdg);
+		HAL_Delay(50);
 	}
 	// Check device ID
 	status = HAL_I2C_Mem_Read(GlobalConfig, IMU_I2C_ADDRESS, BNO055_CHIP_ID_ADDR, 1, &id, 1, 20);
@@ -165,7 +169,6 @@ void IMU_Init(I2C_HandleTypeDef* hi2c, imu_opmode_t mode, imu_axis_map_t map)
 
 	// Set operating mode
 	IMU_SetMode(mode);
-	HAL_Delay(20);
 	HAL_WWDG_Refresh(&hwwdg);
 }
 void IMU_Task(void*pvParameters)
@@ -177,9 +180,12 @@ void IMU_Task(void*pvParameters)
 		g_daq_fault_record.tasks[IMU_TASK].start_tick = xTaskGetTickCount();
 		if (xSemaphoreTake(g_i2c_mutex, pdMS_TO_TICKS(100)) == pdTRUE)
 		{
+			// Read linear acceleration and Euler angles (Tait-Bryan actually).
 //			IMU_GetVector(VECTOR_EULER, (float*)&imu_angles_buffer.current);
 //			IMU_GetVector(VECTOR_LINEARACCEL, (float*)&imu_accels_buffer.current);
 			xSemaphoreGive(g_i2c_mutex);
+
+			// Correct the readings according to the defined mounting offsets.
 			IMU_Eulers_Apply_Offset(&imu_angles_buffer.current);
 			IMU_Transform_Accels(&imu_accels_buffer.current);
 		}
@@ -189,13 +195,18 @@ void IMU_Task(void*pvParameters)
 		{
 			daq_can_msg_t can_msg_imu_angle = {0};
 			daq_can_msg_imu_t encoder_msg_imu_angle = {0};
+
 			encoder_msg_imu_angle.x = (int16_t)(imu_angles_buffer.current.x * DAQ_ACCURACY_IMU_ANGLE_X);
 			encoder_msg_imu_angle.y = (int16_t)(imu_angles_buffer.current.y * DAQ_ACCURACY_IMU_ANGLE_Y);
 			encoder_msg_imu_angle.z = (int16_t)(imu_angles_buffer.current.z * DAQ_ACCURACY_IMU_ANGLE_Z);
+
 			can_msg_imu_angle.id = DAQ_CAN_ID_IMU_ANGLE;
 			can_msg_imu_angle.size = 8;
 			can_msg_imu_angle.data = *((uint64_t*)(&encoder_msg_imu_angle));
+
 			DAQ_CAN_Msg_Enqueue(&can_msg_imu_angle);
+
+			// Save current data to previous to check if it changed significantly.
 			imu_angles_buffer.prev.x = imu_angles_buffer.current.x;
 			imu_angles_buffer.prev.y = imu_angles_buffer.current.y;
 			imu_angles_buffer.prev.z = imu_angles_buffer.current.z;
@@ -206,21 +217,27 @@ void IMU_Task(void*pvParameters)
 		{
 			daq_can_msg_t can_msg_imu_acceleration = {0};
 			daq_can_msg_imu_t encoder_msg_imu_acceleration = {0};
+
 			encoder_msg_imu_acceleration.x = (int16_t)(imu_accels_buffer.current.x * DAQ_ACCURACY_IMU_ANGLE_X);
 			encoder_msg_imu_acceleration.y = (int16_t)(imu_accels_buffer.current.y * DAQ_ACCURACY_IMU_ANGLE_Y);
 			encoder_msg_imu_acceleration.z = (int16_t)(imu_accels_buffer.current.z * DAQ_ACCURACY_IMU_ANGLE_Z);
+
 			can_msg_imu_acceleration.id = DAQ_CAN_ID_IMU_ACCEL;
 			can_msg_imu_acceleration.size = 8;
 			can_msg_imu_acceleration.data = *((uint64_t*)(&encoder_msg_imu_acceleration));
+
 			DAQ_CAN_Msg_Enqueue(&can_msg_imu_acceleration);
+
+			// Save current data to previous to check if it changed significantly.
 			imu_accels_buffer.prev.x = imu_accels_buffer.current.x;
 			imu_accels_buffer.prev.y = imu_accels_buffer.current.y;
 			imu_accels_buffer.prev.z = imu_accels_buffer.current.z;
 		}
-		//for(uint64_t i = 0; i < 6000000; i++);
+		// Update task stats.
 		g_daq_fault_record.tasks[IMU_TASK].entry_count++;
 		g_daq_fault_record.tasks[IMU_TASK].end_tick = xTaskGetTickCount();
 		g_daq_fault_record.tasks[IMU_TASK].runtime = g_daq_fault_record.tasks[IMU_TASK].end_tick - g_daq_fault_record.tasks[IMU_TASK].start_tick;
+
 		vTaskDelayUntil(&xLastWakeTime, 8);
 	}
 }

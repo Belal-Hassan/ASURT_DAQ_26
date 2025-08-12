@@ -8,19 +8,26 @@
 #ifndef GPS_INC_GPS_H_
 #define GPS_INC_GPS_H_
 
-#include "main.h"
+/*======================== STANDARD INCLUDES ========================*/
 #include <ctype.h>
 #include <string.h>
 #include <stdlib.h>
 #include <math.h>
 #include <stdio.h>
+/*===================================================================*/
+
+#include "main.h"
 #include "DAQ.h"
+
 /**
  * @defgroup GPS_Module GPS Group
  * @brief Functions and data structures for GPS communication and data parsing.
  *
  * This module provides initialization, reading, and parsing of GPS data,
  * specifically handling GNRMC sentences over I2C.
+ *
+ * @note the buffer size was chosen to be only 45 bytes wide because the rest of
+ * the data is not needed.
  *
  * @{
  */
