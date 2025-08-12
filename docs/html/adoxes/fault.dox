@@ -1,0 +1,95 @@
+/**
+@defgroup Fault_Module Fault Logging/Detection Group
+@brief Fault detection and logging
+@{
+
+This group contains all defines, enums, structs and functions used in
+detecting DAQ system errors, fixing the system if there's a faulty task, and
+logging errors to the SRAM for manual inspection.
+
+---
+
+## Faulty Task Detection
+
+The @ref DAQ_WWDG_Task() runs every 60 ms and performs the following:
+
+- Checks if all monitored tasks have reported activity (e.g., execution entry or watchdog kick) since the last check.
+- If all tasks are active:
+  - Refreshes the window watchdog (WWDG).
+  - Resets all task activity counters.
+- Otherwise:
+  - Scans for a faulty task in priority order:
+    1. Checks if any task exceeded the maximum allowed runtime.
+    2. If none found, checks if any task exceeded the total elapsed time since its start tick.
+  - On detecting the first faulty task:
+    - Increments its error count.
+    - Breaks the current for loop.
+    - Calls @ref DAQ_Task_Fault_Handler().
+
+The fault handler performs fault logging to backup SRAM, disables interrupts, and halts the system,
+waiting for a WWDG reset.
+
+Upon reboot:
+- Tasks with error counts ≥ `DAQ_MAX_ERROR_COUNT` are demoted to the lowest priority to mitigate faults.
+- Other tasks resume normal operation.
+
+The following figure shows the flow in detail.
+@mermaid{fault1}
+
+### Design Rationale
+- **Higher-to-lower priority scan:** Faults in high-priority tasks can starve lower-priority tasks of CPU time. By checking high-priority ones first, we catch the root cause early instead of misidentifying a stalled low-priority task that was only blocked, not faulty.
+- **Single-fault focus:** Breaking after the first fault avoids multiple simultaneous corrections, making fault origin analysis easier and preventing system instability.
+- **Demotion over removal:** This preserves partial capability. Even faulty tasks may produce useful data intermittently.
+
+---
+
+## General Fault Logging Flow
+
+When a fault exception occurs:
+
+1. Refresh the WWDG to prevent immediate system reset during logging.
+2. Disable interrupts to ensure a consistent snapshot of fault data.
+3. Assemble a `fault_log_t` structure including:
+   - Reset reason code (e.g., `DAQ_RESET_REASON_MEMMANAGE`).
+   - Fault status registers snapshot (`SCB->CFSR` subset).
+   - Fault address (e.g., from `SCB->MMFAR`, `SCB->BFAR`).
+   - Current DAQ fault records (`g_daq_fault_record`).
+   - System timestamp (`g_timestamp`).
+4. Persist the fault log to backup memory via @ref DAQ_FaultLog_Write(), guaranteeing log retention across resets.
+5. Enter an infinite loop to halt execution until the WWDG triggers a system reset.
+6. After reset, retrieve the fault log from backup SRAM using @ref DAQ_FaultLog_Read(), clear the current log,
+   and signal fault presence (e.g., @ref DAQ_Fault_Blink()).
+
+---
+
+## Backup SRAM Usage
+
+Backup SRAM provides non-volatile memory area preserved through resets to store fault logs and system state:
+
+@mermaid{sram_layout}
+@note The hexadecimal numbers in the diagram refer to the offset from the `DAQ_BKPSRAM_BASE_ADDR`
+
+- The **initialization word** reflects the BKPSRAM state, represented by `daq_bkpsram_state_t`.
+- The **log status word** indicates the fault log state, using `daq_log_status_t`.
+- Fault logs are written **twice**:
+  - Once in the **previous log** area (retained for manual inspection).
+  - Once in the **current log** area (cleared after being read on reboot).
+- On system restart:
+  - If the BKPSRAM state is `DAQ_BKPSRAM_INITIALIZED` and the log status is `DAQ_FAULT_LOGGED`,
+    the current log is read and returned by @ref DAQ_FaultLog_Read().
+  - The current log is then cleared to prevent redundaunt warning task triggering, and log status updated to `DAQ_FAULT_READ`.
+  - The previous log remains intact for manual analysis.
+
+This ensures fault logs survive resets and can be examined to diagnose system failures.
+
+---
+
+## Suggested Future Improvements
+
+- Add stack trace capture to fault logs for precise identification of fault origins.
+- Implement multiple fault log buffers to maintain a history of faults across resets.
+- Enable remote fault log retrieval via communication interfaces such as CAN for easy diagnostics without physical access.
+- Develop user-friendly fault report generation, supporting human-readable formats and common export types (e.g., JSON, CSV) for easier analysis.
+
+@}
+ */

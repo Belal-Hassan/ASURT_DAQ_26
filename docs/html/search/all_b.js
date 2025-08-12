@@ -1,0 +1,26 @@
+var searchData=
+[
+  ['main_0',['main',['../main_8c.html#a840291bc02cba5474a4cb46a9b9566fe',1,'main.c']]],
+  ['main_2ec_1',['main.c',['../main_8c.html',1,'']]],
+  ['main_2eh_2',['main.h',['../main_8h.html',1,'']]],
+  ['mapping_20ground_20to_20body_3',['Mapping Ground to Body',['../group___i_m_u___module.html#autotoc_md18',1,'']]],
+  ['median_20filtering_20logic_4',['Kunth&apos;s Gap Shell-Sort Median Filtering Logic',['../group___a_d_c___module.html#autotoc_md1',1,'']]],
+  ['median_5fbuffer_5fclear_5',['Median_Buffer_Clear',['../group___a_d_c___module.html#ga067f6d7835d6c5a669b2a08452e866a6',1,'Median_Buffer_Clear(median_filter_t *this):&#160;Position.c'],['../group___a_d_c___module.html#ga067f6d7835d6c5a669b2a08452e866a6',1,'Median_Buffer_Clear(median_filter_t *this):&#160;Position.c']]],
+  ['median_5fbuffer_5finit_6',['Median_Buffer_Init',['../group___a_d_c___module.html#ga54e24edffec251f51310b41e840a00f2',1,'Median_Buffer_Init(median_filter_t *this):&#160;Position.c'],['../group___a_d_c___module.html#ga54e24edffec251f51310b41e840a00f2',1,'Median_Buffer_Init(median_filter_t *this):&#160;Position.c']]],
+  ['median_5fbuffer_5fshellsort_7',['Median_Buffer_ShellSort',['../group___a_d_c___module.html#gad8ea4c4521eee3af8268d3131250ebf2',1,'Median_Buffer_ShellSort(median_filter_t *this):&#160;Position.c'],['../group___a_d_c___module.html#gad8ea4c4521eee3af8268d3131250ebf2',1,'Median_Buffer_ShellSort(median_filter_t *this):&#160;Position.c']]],
+  ['median_5ffilter_8',['Median_Filter',['../group___a_d_c___module.html#ga2cba7c179494c71bcf1e74805f14a7f1',1,'Median_Filter(median_filter_t *this, uint16_t input):&#160;Position.c'],['../group___a_d_c___module.html#ga2cba7c179494c71bcf1e74805f14a7f1',1,'Median_Filter(median_filter_t *this, uint16_t input):&#160;Position.c']]],
+  ['median_5ffilter_5fbuffer_5fsize_9',['MEDIAN_FILTER_BUFFER_SIZE',['../group___a_d_c___module.html#gaf340fda2ddc77ab4e0d21be2a7750ecd',1,'Position.h']]],
+  ['median_5ffilter_5ft_10',['median_filter_t',['../structmedian__filter__t.html',1,'']]],
+  ['median_5finit_11',['Median_Init',['../group___a_d_c___module.html#ga5c8618cf28e3c6129638096db01b992c',1,'Median_Init(median_filter_t *this, uint16_t *buffer, uint16_t **pt_buffer_sorted, uint16_t size):&#160;Position.c'],['../group___a_d_c___module.html#ga5c8618cf28e3c6129638096db01b992c',1,'Median_Init(median_filter_t *this, uint16_t *buffer, uint16_t **pt_buffer_sorted, uint16_t size):&#160;Position.c']]],
+  ['median_5fiterationget_12',['Median_IterationGet',['../group___a_d_c___module.html#ga1ab477cd8f5428edc72dfe275f2341e7',1,'Median_IterationGet(median_filter_t *this):&#160;Position.c'],['../group___a_d_c___module.html#ga1ab477cd8f5428edc72dfe275f2341e7',1,'Median_IterationGet(median_filter_t *this):&#160;Position.c']]],
+  ['median_5fsortinggap_5finit_13',['Median_SortingGap_Init',['../group___a_d_c___module.html#ga65cc6a603baa0c75cb64368c35c02b1c',1,'Median_SortingGap_Init(median_filter_t *this):&#160;Position.c'],['../group___a_d_c___module.html#ga65cc6a603baa0c75cb64368c35c02b1c',1,'Median_SortingGap_Init(median_filter_t *this):&#160;Position.c']]],
+  ['median_5fvalueget_14',['Median_ValueGet',['../group___a_d_c___module.html#gaa63c17dee5ad82cd1e4f08c424def05d',1,'Median_ValueGet(median_filter_t *this):&#160;Position.c'],['../group___a_d_c___module.html#gaa63c17dee5ad82cd1e4f08c424def05d',1,'Median_ValueGet(median_filter_t *this):&#160;Position.c']]],
+  ['messages_20group_15',['CAN Messages Group',['../group___c_a_n___module.html',1,'']]],
+  ['minimum_20buffer_20size_16',['Minimum Buffer Size',['../group___prox___module.html#autotoc_md24',1,'']]],
+  ['minimum_20stop_20speed_17',['Minimum (Stop) Speed',['../group___prox___module.html#autotoc_md25',1,'']]],
+  ['moving_20average_20logic_18',['Moving Average Logic',['../group___temp___module.html#autotoc_md30',1,'']]],
+  ['moving_5favg_19',['Moving_Avg',['../group___temp___module.html#gabcd07025c5ecfd2ba5daa005026141e5',1,'Moving_Avg(float next_num, uint8_t sensor_index):&#160;Temperature.c'],['../group___temp___module.html#gabcd07025c5ecfd2ba5daa005026141e5',1,'Moving_Avg(float next_num, uint8_t sensor_index):&#160;Temperature.c']]],
+  ['moving_5favg_5ft_20',['moving_avg_t',['../structmoving__avg__t.html',1,'']]],
+  ['moving_5favg_5fwindow_5fsize_21',['MOVING_AVG_WINDOW_SIZE',['../group___temp___module.html#ga65645d9600802e9104555656046851ad',1,'Temperature.h']]],
+  ['my_5fatof_22',['my_atof',['../group___g_p_s___module.html#gaf6a2b247895db56da2e9ae4c93f3a396',1,'GPS.c']]]
+];

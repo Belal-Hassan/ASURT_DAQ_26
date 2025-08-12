@@ -1,0 +1,40 @@
+/**
+@defgroup Trace_Module Trace Recording Group
+@brief Snapshot statistics and trace recording system.
+@{
+This module uses the Cortex-M DWT cycle counter to collect CPU runtime statistics,
+and controls trace recording for debugging and performance analysis. It runs
+a dedicated FreeRTOS task to periodically manage trace snapshots and error handling.
+
+The functionality is enabled by defining @ref DAQ_TRACE_RECORDER. Call
+`TraceRecorder_Init()` during system startup to initialize and start tracing.
+
+@attention 
+- @ref MX_WWDG_Init must be disabled for the snapshot to be captured properly. The WWDG resets every 110ms, screwing up the snapshot. 
+- The GDB debugger selected in Tracealzyer 4 must be the one used by STM32CubeIDE, and you should start a debugging session to read a snapshot.
+
+This part in the @ref FreeRTOSConfig.h file is responsible for setting up tracing. 
+\code
+#ifdef DAQ_TRACE_RECORDER
+	#define configUSE_TRACE_FACILITY        1
+	#define configUSE_STATS_FORMATTING_FUNCTIONS    1
+	#define configGENERATE_RUN_TIME_STATS       1
+	extern void vInitRunTimeStats(void);
+	extern uint32_t ulGetRunTimeCounterValue(void);
+	#define portCONFIGURE_TIMER_FOR_RUN_TIME_STATS()  vInitRunTimeStats()
+	#define portGET_RUN_TIME_COUNTER_VALUE()  ulGetRunTimeCounterValue()
+#else
+	#define configUSE_TRACE_FACILITY  0
+	#define configUSE_STATS_FORMATTING_FUNCTIONS	0
+	#define configGENERATE_RUN_TIME_STATS	  0
+#endif
+\endcode
+
+After successfully capturing and reading a snapshot, your output should look something like this.
+\htmlonly
+  <div style="text-align: center;">
+    <img src="tracealyzer.png" alt="A screenshot from the Tracealzyer 4 app" style="max-width:90%; height:auto;">
+  </div>
+\endhtmlonly
+@}
+ */

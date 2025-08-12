@@ -1,0 +1,26 @@
+var annotated_dup =
+[
+    [ "adc_median_filter_t", "structadc__median__filter__t.html", "structadc__median__filter__t" ],
+    [ "adc_reading_buffer_t", "structadc__reading__buffer__t.html", "structadc__reading__buffer__t" ],
+    [ "daq_can_msg_adc_t", "structdaq__can__msg__adc__t.html", null ],
+    [ "daq_can_msg_gps_t", "structdaq__can__msg__gps__t.html", null ],
+    [ "daq_can_msg_imu_t", "structdaq__can__msg__imu__t.html", "structdaq__can__msg__imu__t" ],
+    [ "daq_can_msg_prox_t", "structdaq__can__msg__prox__t.html", null ],
+    [ "daq_can_msg_t", "structdaq__can__msg__t.html", "structdaq__can__msg__t" ],
+    [ "daq_can_msg_temp_t", "structdaq__can__msg__temp__t.html", null ],
+    [ "daq_fault_log_buffer_t", "structdaq__fault__log__buffer__t.html", "structdaq__fault__log__buffer__t" ],
+    [ "daq_fault_record_t", "structdaq__fault__record__t.html", null ],
+    [ "daq_status_words_t", "structdaq__status__words__t.html", null ],
+    [ "daq_timestamp_t", "structdaq__timestamp__t.html", null ],
+    [ "fault_log_t", "structfault__log__t.html", "structfault__log__t" ],
+    [ "gps_gnrmc_data_t", "structgps__gnrmc__data__t.html", "structgps__gnrmc__data__t" ],
+    [ "imu_axis_map_t", "structimu__axis__map__t.html", "structimu__axis__map__t" ],
+    [ "imu_reading_buffer_t", "structimu__reading__buffer__t.html", "structimu__reading__buffer__t" ],
+    [ "imu_vector_t", "structimu__vector__t.html", "structimu__vector__t" ],
+    [ "median_filter_t", "structmedian__filter__t.html", "structmedian__filter__t" ],
+    [ "moving_avg_t", "structmoving__avg__t.html", "structmoving__avg__t" ],
+    [ "prox_rpm_buffer_t", "structprox__rpm__buffer__t.html", null ],
+    [ "task_stats_t", "structtask__stats__t.html", "structtask__stats__t" ],
+    [ "temp_reading_buffer_t", "structtemp__reading__buffer__t.html", "structtemp__reading__buffer__t" ],
+    [ "temp_sensor_data_t", "structtemp__sensor__data__t.html", "structtemp__sensor__data__t" ]
+];

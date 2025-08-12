@@ -1,0 +1,64 @@
+/**
+@defgroup CAN_Module CAN Messages Group 
+@brief Encoding, decoding, and transmitting flow for CAN messages.
+
+@{
+
+ This group contains all defines, enums, structs and functions used in
+ encoding and queuing sensors' readings to be transmitted via the CAN bus.
+ All readings are encoded to `daq_can_msg_t::data`.
+
+ ## Transmission flow
+
+For any sensor reading (accelerations, suspension heights, etc.):
+
+1. **Change Detection**:
+    - Compare each component of current readings against previous values
+    - Use sensor-specific threshold values appropriate for each dimension
+    - Trigger transmission if ANY component exceeds its threshold
+
+2. **Data Preparation**:
+    - Convert floating-point sensor values to fixed-point representation
+    - Apply scaling factors for optimal precision within limited CAN message space
+    - Package data into appropriately formatted CAN message structures (the algorithm is covered in the next section)
+
+3. **Transmission & State Update**:
+    - Queue the prepared message for CAN transmission
+    - Update "previous" values to current readings (preventing redundant messages)
+    - Maintain state for next change detection cycle
+
+The `DAQ_CAN_Task()` then gets unblocked when a message is added to the queue, and it transmits the message. 
+
+ Generally speaking, instead of periodically transmitting all sensor data at fixed intervals, the system:
+ 1. Tracks both current and previous values for each sensor channel
+ 2. Checks if new readings differ significantly from previous values
+ 3. Only transmits when changes exceed predefined thresholds
+
+ ## Encoded & Decoding Algorithm
+ To encode messages the following simple, yet effective, algorithm is used:
+ \code
+ daq_can_msg_xyz_t to_encode = {.a = A, .b = B,};
+ daq_can_msg_t msg = {0};
+ msg.data = *((uint64_t*)&to_encode);
+ \endcode
+ And to decode, the opposite is done:
+ \code
+ daq_can_msg_t msg = {0};
+ CAN_Receive(&msg);
+ daq_can_msg_xyz_t decoded = *((daq_can_msg_xyz_t*)&msg.data);
+ \endcode
+ This works by:
+ - Taking the address of the source struct (`to_encode` or `msg.data`).
+ - Casting that pointer to a pointer of the target type (`uint64_t*` or `daq_can_msg_xyz_t*`).
+ - Dereferencing the cast pointer to obtain the packed or unpacked data.
+
+ @attention
+ - This method assumes a **little-endian** architecture and consistent compiler behavior. It may not be portable across different platforms.
+ - To ensure safe and predictable encoding/decoding, structs **must have a fixed size and layout** matching exactly 8 bytes (the size of `uint64_t`), and
+ that's why `static_assert` is used.
+ - Compilers may add **implicit padding** for alignment, so **manual padding** fields should be added as needed.
+ - Misaligned or differently padded structs will cause incorrect data encoding and decoding, potentially corrupting transmitted data.
+
+
+@}
+ */

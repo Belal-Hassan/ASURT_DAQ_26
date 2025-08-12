@@ -1,0 +1,44 @@
+/**
+@defgroup ADC_Module Suspension/Brake Pressure Group
+@brief Reads and Processes ADC signals from Suspension and Brake Pressure Sensors and transmits readings via CAN.
+@{
+
+## Overview
+
+This module reads 6 ADC signals (4 from suspension sensors and 2 from brake pressure ones) using DMA.
+It then processes them using a median filter algorithm. The algorithm's implementation uses a Shell-sort 
+based median filter to effectively remove noise and outliers from sensor readings while maintaining low computational overhead.
+
+## Kunth's Gap Shell-Sort Median Filtering Logic
+
+### How It Works
+ When a new sensor value arrives:
+ 1. It replaces the oldest value in a circular buffer (size=5)
+ 2. Instead of sorting the actual data, we sort an array of pointers to the data
+     - This avoids moving the data itself (much faster)
+     - Example: If buffer = [8, 3, 5, 1, 9], pointer array references these values
+  
+ 3. We use Shell sort with Knuth's gap sequence to efficiently re-sort:
+    - Start with largest gap < buffer_size/3 (for size=5, gap=1)
+    - First pass compares elements 1 position apart (like insertion sort)
+    - After sorting, pointer array shows values in order: [1, 3, 5, 8, 9]
+ 
+ 4. The median is simply the middle value (5 in this example)
+
+### Advantages
+
+Because only 1 value changes each time (the new sample), the buffer is already mostly sorted, and therefore
+  - Sorting pointers (4 bytes each) is faster than moving actual data
+  - For small buffers (5 elements), this completes in just 1-3 comparisons
+
+Traditional sorting would be wasteful since we only change one value per update.
+This method only does the minimal work needed to maintain the sorted order:
+ - New value gets "bubbled" to its correct position
+ - Most of the buffer stays in place because it's already sorted
+ - Middle pointer always gives us the median instantly
+ 
+@note The algorithm essentially does a quick insertion sort
+on nearly-sorted data, which is extremely efficient (typically <5 operations for size=5).
+
+@}
+ */

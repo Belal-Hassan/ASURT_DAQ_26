@@ -1,0 +1,42 @@
+\_form#0=598x14:\[Minimum speed is set to  60 (Rev/s to RPM) /(7 (RTOS ticks) * 200 (RTOS Frequency) * 21 (slow_counter counts) * 4 (nails)) = 20 RPM
+\]
+\_form#1=31x13:\[    xadfs
+\]
+\_form#2=29x10:\[    \textrm{xadfs}
+\]
+\_form#3=428x25:$ \textrm{ (RTOS Delay Ticks) } \times \textrm{ (RTOS Frequency) } \times \textrm{ (slow counter max) } = 7\times 200 \times 21 = 0.75 \textrm{sec} $
+\_form#4=489x14:\[    \textrm{ (RTOS Delay Ticks) } \times \textrm{ (RTOS Frequency) } \times \textrm{ (slow counter max) } = 7\times 200 \times 21 = 0.75 \textrm{sec} \]
+\_form#5=353x31:\[    \frac{\textrm{ (RTOS Delay Ticks) } \times \textrm{ (slow counter max) }}{\textrm{ (RTOS Frequency Hz) }}  = \frac{7 \times 20}{200} = 0.7 \textrm{sec} \]
+\_form#6=353x31:\[    \frac{\textrm{ (RTOS Delay Ticks) } \times \textrm{ (slow counter max) }}{\textrm{ (RTOS Frequency Hz) }}  = \frac{7 \times 20}{200} = 0.7 \textrm{sec} 
+\]
+\_form#7=110x14:$ 60/2.8 = 21.4 RPM. $
+\_form#8=309x14:$ 2\times\textrm{PCLK1 in Hz}/\textrm{Prescalar} = 2\times 18E6/1200 = 30 KHz $
+\_form#9=306x23:$ \frac{2\times\textrm{PCLK1 Frequency in Hz}}{\textrm{Prescalar}} = 2\times 18E6/1200 = 30 KHz $
+\_form#10=251x25:$ \frac{2\textrm{(PCLK1 Frequency Hz)}}{\textrm{Prescalar}} = \frac{2(18\textrm{E}6)}{1200} = 30 KHz $
+\_form#11=263x29:\[    \frac{2\textrm{(PCLK1 Frequency Hz)}}{\textrm{Prescalar}} = \frac{2(18\textrm{E}6)}{1200} = 30 KHz, 
+\]
+\_form#12=288x29:\[    \frac{2\times\textrm{(PCLK1 Frequency Hz)}}{\textrm{Prescalar}} = \frac{2\times(18\textrm{E}6)}{1200} = 30 \textrm{KHz}, 
+\]
+\_form#13=288x29:\[    \frac{2\times\textrm{(PCLK1 Frequency Hz)}}{\textrm{Prescalar}} = \frac{2\times(18\textrm{E}6)}{1200} = 30 \textrm{KHz,} 
+\]
+\_form#14=384x31:\[    \textrm{(no. of input captures)} = \frac{\textrm{(RTOS delay ticks)} \times \textrm{(Event Frequency Hz)}}{\textrm{(RTOS Frequency Hz)}}
+\]
+\_form#15=585x31:\[    \textrm{(no. of input captures)} = \frac{\textrm{(RTOS delay ticks)} \times \textrm{(Event Frequency Hz)}}{\textrm{(RTOS Frequency Hz)}} = \frac{7\times 132}{200} = 4.62 \; \mathrm{(rounded\ up)} \; = 5 
+\]
+\_form#16=573x31:\[    \textrm{(no. of input captures)} = \frac{\textrm{(RTOS delay ticks)} \times \textrm{(Event Frequency Hz)}}{\textrm{(RTOS Frequency Hz)}} = \frac{7\times 132}{200} = 4.62 \; \mathrm{(round\ up)} \; = 5 
+\]
+\_form#17=138x13:$ 0.7\times 30\textrm{E}3 = 21,000 \textrm{ticks}$
+\_form#18=33x14:$R_z(\psi)$
+\_form#19=30x14:$R_y(\theta)$
+\_form#20=31x14:$R_x(\phi)$
+\_form#21=10x13:$\vec{G}$
+\_form#22=10x13:$\vec{B}$
+\_form#23=135x16:\[  \vec{B} = R_x(\phi)R_y(\theta)R_z(\psi)\vec{G}
+\]
+\_form#24=150x43:\[R_x(\phi) =
+\begin{array}{ccc}
+  1 & 0 & 0 \\
+  0 & \cos\phi & -\sin\phi \\
+  0 & \sin\phi & \cos\phi
+\end{array}
+\]

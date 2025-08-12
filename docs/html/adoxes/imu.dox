@@ -1,0 +1,71 @@
+/**
+@defgroup IMU_Module IMU Group 
+@brief Driver implementation for Adafruit BNO055 9-DoF Absolute Orientation Sensor
+
+@{
+
+## Overview
+
+This module provides an interface for configuring and reading Tait-Bryan angles
+and linear acclererations from the BNO055 Adafruit IMU sensor. The driver supports various operation modes, 
+axis remapping, and data transformation to accommodate different vehicle mounting orientations.
+
+@note This driver includes only the functionality required for the current application. 
+For additional features, refer to the BNO055 datasheet for implementation details.
+
+## Initialization flow
+1. **Hardware reset & sensor reboot:** The reset procedure requires a delay (datasheet ≈ 650 ms). The driver
+     waits by looping short delays and refreshing the window watchdog (WWDG)
+     so the watchdog does not reset the MCU during this long delay.
+@attention The NIVC priority of the timebase timer (should be different than systick because RTOS uses it) must be set to
+a higher priority (lower in value) than the `configLIBRARY_MAX_SYSCALL_INTERRUPT_PRIORITY`. It took me 10 hours to debug,
+and it ruined a whole testing day (Arrived home at 2 AM)
+2. **Device presence check:** After reset, the driver reads the CHIP ID register and verifies it matches
+     the expected IMU ID. If the read fails or ID is incorrect the init aborts.
+3. **Power mode & page selection:** The driver sets the IMU power mode to normal
+4. **Acceleration configuration:** Acceleration range is set to 16g.
+@attention The register page must be switched to 1 to change the acceleration range. Don't forget to set it back to 0 if needed (you abslotely will).
+5. **Axis remapping:** Axis remapping and sign settings are written to the axis map registers to align IMU axes with the vehicle coordinate frame.
+6. **Operational mode:** The NDOF operating mode is set. The reason why it was used is that it 
+    fuses data from the accelerometer, gyroscope, and magnetometer to give absolute orientation output. 
+    All calculations take place inside the BNO055 chip itself not the DAQ MCU, killing computational intensity.
+
+## Calibration and Offsets
+
+It’s nearly impossible to mount the sensor with perfectly zeroed pitch (about the y-axis) and roll (about the x-axis).
+Even attempting to make these angles close enough to 0 to be negligible can be exhausting. As a result, an offset 
+will be subtracted from the measured angles, and the linear acceleration readings will be corrected through 
+a linear transformation to properly align the axes. The angles' offset is obvious: pure subtraction. Therefore, I'll 
+discuss the linear transformation.
+
+### Mapping Ground to Body
+
+The normal transformation from the ground frame (name it \f$\vec{G}\f$) of reference to the body frame (\f$\vec{B}\f$) applies intrinsic rotations in the order:
+- Yaw \f$R_z(\psi)\f$
+- Pitch \f$R_y(\theta)\f$
+- Roll \f$R_x(\phi)\f$
+
+Therefore, the transformation could be written as follows
+\f[
+  \vec{B} = R_x(\phi)R_y(\theta)R_z(\psi)\vec{G}
+\f]
+This is the effect we want to reverse. In other words, we need to define a mapping from the body frame to the ground frame. To do so, we can simply
+- Reverse the order of the applied rotations (start with roll).
+- Flip the angle's sign (to inverse the rotation).
+
+The original mapping looks like this. 
+\htmlonly
+  <div style="text-align: center;">
+    <img src="oldTr.png" alt="3-2-1 Rotation Linear transformation from frame to body" style="max-width:90%; height:auto;">
+  </div>
+\endhtmlonly
+We will reverse, flip signs, and remove the R_z matrix because no yaw correction is needed. Hence, we get
+\htmlonly
+  <div style="text-align: center;">
+    <img src="newTr.png" alt="3-2-1 Rotation Linear transformation from body to frame" style="max-width:70%; height:auto;">
+  </div>
+\endhtmlonly
+and that's exactly the offset correction linear transformation used in the code.
+
+@}
+ */

@@ -1,0 +1,46 @@
+/**
+@defgroup Temp_Module Wheel Temperature Group
+@brief Reads, processes, and transmits temperature data from wheel-mounted infrared sensors.
+@{
+
+## Overview
+
+This module communicates with MLX90614 temperature sensors over I²C to measure
+the surface temperature at each wheel. The readings are averaged
+over a fixed window to reduce noise before being transmitted via CAN.
+
+### Workflow
+- Initialize I²C interface using `Temp_Init()`
+In `Temp_Task()`, for each wheel:
+- Periodically read raw temperature data `Temp_ReadRaw()`  
+- Convert raw values to Celsius `Temp_Process()`
+- Apply moving average filtering `Moving_Avg()`
+
+If at least 1 wheel's temperature changed significantly, transmit results via CAN messages only on significant change.
+
+---
+
+## Moving Average Logic
+A moving average filter is applied to smooth out short-term fluctuations:
+- Each sensor has a buffer of the most recent `N` readings.
+- When a new reading is taken, it replaces the oldest reading in the buffer.
+- The sum is updated by subtracting the oldest value and adding the new one.
+- The average is then calculated as `sum / N` once the buffer is full.
+
+This method prevents false temperature changes due to transient spikes,
+but introduces a small delay in reflecting real changes.
+
+## I²C Addressing
+The I²C address of each sensor is calculated as:
+```
+SENSOR_ADDRESS = BASE_ADDRESS + (SENSOR_INDEX * ADDRESS_SPACING)
+```
+This allows multiple identical devices to coexist on the same I²C bus by
+assigning each a unique address offset.
+
+@attention When configuring I²C in STM32 HAL, the address passed to HAL functions is usually 
+the **7-bit address**, not shifted. You should shift it manually.
+
+@}
+ */
+

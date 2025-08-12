@@ -1,0 +1,78 @@
+/**
+@defgroup Prox_Module Proximity (Speed) Group
+@brief Wheel RPM measurement and speed calculation using timer input capture and DMA.
+@{
+
+## Overview
+
+This group handles the initialization and periodic processing of proximity sensors
+attached to the wheels. It calculates wheel RPM from timer input capture data transferred
+via DMA, handles low-speed and stopped conditions, and publishes wheel RPM and speed data over CAN.
+
+Timer input events triggered by 4 nails mounted on each wheel passing a proximity sensor. 
+Each nail generates an input capture event, so each full wheel rotation produces 4 captures.
+
+Timer input captures are transferred via DMA into buffers of size 10 elements
+per wheel. The buffer size is chosen to prevent overflow caused by slow wheel rotation 
+(calculations are shown below), ensuring the system resets and clears the buffer before it wraps.
+
+At very slow speeds, capture events are spaced far apart, increasing the risk
+of the DMA buffer filling slowly and overflowing. By periodically processing
+and clearing these buffers, the system prevents overflow and maintains
+accurate RPM readings.
+
+### Workflow
+
+`Prox_Task` does the following periodically for each wheel:
+- Processes valid captures and computes RPM from timer count differences.
+- Detects slow or stopped wheels by monitoring buffer activity.
+- Resets DMA buffers to avoid stale data and overflow.
+- Calculates vehicle speed from front wheel RPM averages and tire circumference.
+- Sends RPM and speed CAN messages only on significant change to reduce bus load.
+
+---
+
+## Calculations
+
+In this section, critical calculations will be covered.
+
+### Timer Prescaled Frequency
+
+Timer prescaled frequency is 
+\f[ 
+    \frac{2\times\textrm{(PCLK1 Frequency Hz)}}{\textrm{Prescalar}} = \frac{2\times(18\textrm{E}6)}{1200} = 30 \textrm{KHz,} 
+\f] which is abslotely more than double the wheel frequency (2 * 132 Hz) at top speed (150 km/h).
+
+### Minimum Buffer Size
+
+The minimum buffer size needed to capture this top speed could be calculated by calculating how many input captures would occur during the RTOS delay.
+To do so, we can divide the delay time in seconds by the time between 2 input captures at top speed, giving us the following formula
+\f[
+    \textrm{(no. of input captures)} = \frac{\textrm{(RTOS delay ticks)} \times \textrm{(Event Frequency Hz)}}{\textrm{(RTOS Frequency Hz)}} = \frac{7\times 132}{200} = 4.62 \; \mathrm{(round\ up)} \; = 5 
+\f]
+Hence, the minimum buffer size is 5, and I chose it to be 10 for saftey.
+
+@attention You must round the answer up (not approximate) and at least add 1.
+
+### Minimum (Stop) Speed
+The minimum time window for proximity to capture 2 successive input event is set to 
+\f[ 
+    \frac{\textrm{ (RTOS Delay Ticks) } \times \textrm{ (slow counter max) }}{\textrm{ (RTOS Frequency Hz) }}  = \frac{7 \times 20}{200} = 0.7 \textrm{sec} 
+\f]
+Since this time corresponds to a quarter turn, we should multiply it by 4 to get the time of a full rotation, yielding 2.8 seconds.
+Therefore, the lowest capturable RPM, or in other words, the "wheel stopped" RPM is  60 / 2.8 = 21.4 RPM.
+
+### Overflow Check
+
+To ensure no overflows occur, we will use the maximum time between 2 successive captures (the 0.7 seconds calculated in the previous section). 
+The 0.7 seconds correspond to 0.7 * 30E3 = 21,000 ticks. Since a buffer element is of type `uint16_t`, its maximum value
+is 65,535, which is more than the 2 * 21,000 ticks needed. (assuming the worst case, the first capture will take place at tick 20,999, and
+the second at 41,999, so we need at least double the ticks calculated.) Thus, an overflow will not occur.
+
+@note Generally speaking, any frequency between 46 kHz and 2 * 132 Hz should "theoretically" work, but the lower the frequency,
+the less stable high-speed readings will become.
+
+
+@}
+ */
+

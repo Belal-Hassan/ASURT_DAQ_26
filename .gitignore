@@ -2,7 +2,6 @@
 /Release/
 /build/
 /.settings/
-/docs/
 
 *.o
 *.d
