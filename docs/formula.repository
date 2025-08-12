@@ -1,0 +1,13 @@
+\_form#0=10x13:$\vec{G}$
+\_form#1=10x13:$\vec{B}$
+\_form#2=33x14:$R_z(\psi)$
+\_form#3=30x14:$R_y(\theta)$
+\_form#4=31x14:$R_x(\phi)$
+\_form#5=135x16:\[  \vec{B} = R_x(\phi)R_y(\theta)R_z(\psi)\vec{G}
+\]
+\_form#6=288x29:\[    \frac{2\times\textrm{(PCLK1 Frequency Hz)}}{\textrm{Prescalar}} = \frac{2\times(18\textrm{E}6)}{1200} = 30 \textrm{KHz,} 
+\]
+\_form#7=573x31:\[    \textrm{(no. of input captures)} = \frac{\textrm{(RTOS delay ticks)} \times \textrm{(Event Frequency Hz)}}{\textrm{(RTOS Frequency Hz)}} = \frac{7\times 132}{200} = 4.62 \; \mathrm{(round\ up)} \; = 5 
+\]
+\_form#8=353x31:\[    \frac{\textrm{ (RTOS Delay Ticks) } \times \textrm{ (slow counter max) }}{\textrm{ (RTOS Frequency Hz) }}  = \frac{7 \times 20}{200} = 0.7 \textrm{sec} 
+\]
