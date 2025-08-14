@@ -38,8 +38,12 @@ SENSOR_ADDRESS = BASE_ADDRESS + (SENSOR_INDEX * ADDRESS_SPACING)
 This allows multiple identical devices to coexist on the same I²C bus by
 assigning each a unique address offset.
 
+@attention you'll need to manually assign I²C addresses to each of the 3 new temperature sensors by writing to the slave address register in the EEPROM. This must
+be done with one sensor at a time to prevent conflicts. Don't forget to make the addresses evenly spaced by `TEMP_I2C_ADDRESS_SPACING` and edit the 
+`TEMP_I2C_BASE_ADDRESS` if the least address changed.
+
 @attention When configuring I²C in STM32 HAL, the address passed to HAL functions is usually 
-the **7-bit address**, not shifted. You should shift it manually.
+the **7-bit address**, not shifted. You should shift it manually (I already did so in ` Temp_ReadRaw()`).
 
 @}
  */

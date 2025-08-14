@@ -29,6 +29,9 @@
  * @note the buffer size was chosen to be only 45 bytes wide because the rest of
  * the data is not needed.
  *
+ * @attention When configuring I²C in STM32 HAL, the address passed to HAL functions is usually 
+ * the **7-bit address**, not shifted. You should shift it manually (I already did so in @ref DAQ_Config.h).
+ *
  * @{
  */
 

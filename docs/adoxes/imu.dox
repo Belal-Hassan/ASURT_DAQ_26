@@ -6,7 +6,7 @@
 
 ## Overview
 
-This module provides an interface for configuring and reading Tait-Bryan angles
+This module provides an interface for configuring and reading **3-2-1 Tait-Bryan (or euler) angles**
 and linear acclererations from the BNO055 Adafruit IMU sensor. The driver supports various operation modes, 
 axis remapping, and data transformation to accommodate different vehicle mounting orientations.
 
@@ -30,9 +30,12 @@ and it ruined a whole testing day (Arrived home at 2 AM)
     fuses data from the accelerometer, gyroscope, and magnetometer to give absolute orientation output. 
     All calculations take place inside the BNO055 chip itself not the DAQ MCU, killing computational intensity.
 
+@attention When configuring I²C in STM32 HAL, the address passed to HAL functions is usually 
+the **7-bit address**, not shifted. You should shift it manually (I already did in the @ref DAQ_Config.h).
+
 ## Calibration and Offsets
 
-It’s nearly impossible to mount the sensor with perfectly zeroed pitch (about the y-axis) and roll (about the x-axis).
+It's nearly impossible to mount the sensor with perfectly zeroed pitch (about the y-axis) and roll (about the x-axis).
 Even attempting to make these angles close enough to 0 to be negligible can be exhausting. As a result, an offset 
 will be subtracted from the measured angles, and the linear acceleration readings will be corrected through 
 a linear transformation to properly align the axes. The angles' offset is obvious: pure subtraction. Therefore, I'll 
@@ -50,8 +53,8 @@ Therefore, the transformation could be written as follows
   \vec{B} = R_x(\phi)R_y(\theta)R_z(\psi)\vec{G}
 \f]
 This is the effect we want to reverse. In other words, we need to define a mapping from the body frame to the ground frame. To do so, we can simply
-- Reverse the order of the applied rotations (start with roll).
-- Flip the angle's sign (to inverse the rotation).
+reverse the transformations we did and apply them in the opposite order: we did +yaw, +pitch, then +roll, so to revert, we do -roll, -pitch, then -yaw 
+(imagine it in your head).
 
 The original mapping looks like this. 
 \htmlonly
