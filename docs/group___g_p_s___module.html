@@ -158,6 +158,7 @@ Functions</h2></td></tr>
 <p>Functions and data structures for GPS communication and data parsing. </p>
 <p>This module provides initialization, reading, and parsing of GPS data, specifically handling GNRMC sentences over I2C.</p>
 <dl class="section note"><dt>Note</dt><dd>the buffer size was chosen to be only 45 bytes wide because the rest of the data is not needed.</dd></dl>
+<dl class="section attention"><dt>Attention</dt><dd>When configuring I²C in STM32 HAL, the address passed to HAL functions is usually the <b>7-bit address</b>, not shifted. You should shift it manually (I already did so in <a class="el" href="_d_a_q___config_8h_source.html">DAQ_Config.h</a>).</dd></dl>
 <a name="doc-func-members" id="doc-func-members"></a><h2 id="header-doc-func-members" class="groupheader">Function Documentation</h2>
 <a id="ga941837dae9b52fa1198b726d36c1f6d9" name="ga941837dae9b52fa1198b726d36c1f6d9"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ga941837dae9b52fa1198b726d36c1f6d9">&#9670;&#160;</a></span>convertToDegrees()</h2>

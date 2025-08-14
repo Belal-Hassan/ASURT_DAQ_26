@@ -247,38 +247,7 @@ Faulty Task Detection</h2>
 <li>Other tasks resume normal operation.</li>
 </ul>
 <p>The following figure shows the flow in detail.  <div class="mermaid"> 
-  sequenceDiagram
-    participant Watchdog_Task as Watchdog Task
-    participant Task_Pool as Task Pool
-    participant Fault_Handler as Fault Handler
-    participant System as System Boot
-
-    loop Every 60ms
-        Watchdog_Task->>Task_Pool: Initial State or All tasks entered/kicked?
-        alt Initial phase or all tasks active
-            Watchdog_Task->>Watchdog_Task: Refresh watchdog
-            Watchdog_Task->>Task_Pool: Reset entry count and runtime for all tasks
-        else Fault detection phase
-            Watchdog_Task->>Task_Pool: For each task (high to low priority), check runtime > max
-            alt Runtime fault found
-                Watchdog_Task->>Task_Pool: Increment task error count and break
-                Watchdog_Task->>Fault_Handler: Call fault handler and halt
-            else Not a runtime fault
-                Watchdog_Task->>Task_Pool: For each task (high to low priority), check elapsed ticks > max
-                alt Elapsed fault found
-                    Watchdog_Task->>Task_Pool: Increment error count and break
-                    Watchdog_Task->>Fault_Handler: Call fault handler and halt
-                end
-            end
-        end
-    end
-    System->>Task_Pool: After reset, check each task error counts.
-    alt Errors exceed max
-        System->>Task_Pool: Demote faulty tasks to the lowest priority (0)
-    else Error counts normal
-        System->>Task_Pool: Allow normal operation
-    end
-  
+    
  </div> </p>
 <h3 class="doxsection"><a class="anchor" id="autotoc_md8"></a>
 Design Rationale</h3>
@@ -311,16 +280,7 @@ General Fault Logging Flow</h2>
 Backup SRAM Usage</h2>
 <p>Backup SRAM provides non-volatile memory area preserved through resets to store fault logs and system state:</p>
 <p> <div class="mermaid"> 
-  graph LR
-    A["Init Word<br/>(0x00 - 0x03)"]:::sec1
-    B["Log Status<br/>(0x04 - 0x07)"]:::sec2
-    C["Current Fault Log<br/>(0x08 - 0x3B)"]:::sec3
-    D["Previous Fault Log<br/>(0x3C - 0x6F)"]:::sec4
-
-    A --- B --- C --- D
-
     
-  
  </div>  </p><dl class="section note"><dt>Note</dt><dd>The hexadecimal numbers in the diagram refer to the offset from the <span class="tt">DAQ_BKPSRAM_BASE_ADDR</span></dd></dl>
 <ul>
 <li>The <b>initialization word</b> reflects the BKPSRAM state, represented by <span class="tt"><a class="el" href="#gac76fc28934ab77d9f0feede01defa34e" title="Backup SRAM states.">daq_bkpsram_state_t</a></span>.</li>

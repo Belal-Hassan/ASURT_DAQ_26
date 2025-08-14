@@ -231,7 +231,7 @@ Functions</h2></td></tr>
 <p>Driver implementation for Adafruit BNO055 9-DoF Absolute Orientation Sensor. </p>
 <h2 class="doxsection"><a class="anchor" id="autotoc_md15"></a>
 Overview</h2>
-<p>This module provides an interface for configuring and reading Tait-Bryan angles and linear acclererations from the BNO055 Adafruit IMU sensor. The driver supports various operation modes, axis remapping, and data transformation to accommodate different vehicle mounting orientations.</p>
+<p>This module provides an interface for configuring and reading <b>3-2-1 Tait-Bryan (or euler) angles</b> and linear acclererations from the BNO055 Adafruit IMU sensor. The driver supports various operation modes, axis remapping, and data transformation to accommodate different vehicle mounting orientations.</p>
 <dl class="section note"><dt>Note</dt><dd>This driver includes only the functionality required for the current application. For additional features, refer to the BNO055 datasheet for implementation details.</dd></dl>
 <h2 class="doxsection"><a class="anchor" id="autotoc_md16"></a>
 Initialization flow</h2>
@@ -245,9 +245,10 @@ Initialization flow</h2>
 <li><b>Axis remapping:</b> Axis remapping and sign settings are written to the axis map registers to align IMU axes with the vehicle coordinate frame.</li>
 <li><b>Operational mode:</b> The NDOF operating mode is set. The reason why it was used is that it fuses data from the accelerometer, gyroscope, and magnetometer to give absolute orientation output. All calculations take place inside the BNO055 chip itself not the DAQ MCU, killing computational intensity.</li>
 </ol>
+<dl class="section attention"><dt>Attention</dt><dd>When configuring I²C in STM32 HAL, the address passed to HAL functions is usually the <b>7-bit address</b>, not shifted. You should shift it manually (I already did in the <a class="el" href="_d_a_q___config_8h_source.html">DAQ_Config.h</a>).</dd></dl>
 <h2 class="doxsection"><a class="anchor" id="autotoc_md17"></a>
 Calibration and Offsets</h2>
-<p>It’s nearly impossible to mount the sensor with perfectly zeroed pitch (about the y-axis) and roll (about the x-axis). Even attempting to make these angles close enough to 0 to be negligible can be exhausting. As a result, an offset will be subtracted from the measured angles, and the linear acceleration readings will be corrected through a linear transformation to properly align the axes. The angles' offset is obvious: pure subtraction. Therefore, I'll discuss the linear transformation.</p>
+<p>It's nearly impossible to mount the sensor with perfectly zeroed pitch (about the y-axis) and roll (about the x-axis). Even attempting to make these angles close enough to 0 to be negligible can be exhausting. As a result, an offset will be subtracted from the measured angles, and the linear acceleration readings will be corrected through a linear transformation to properly align the axes. The angles' offset is obvious: pure subtraction. Therefore, I'll discuss the linear transformation.</p>
 <h3 class="doxsection"><a class="anchor" id="autotoc_md18"></a>
 Mapping Ground to Body</h3>
 <p>The normal transformation from the ground frame (name it <picture><source srcset="form_0_dark.png" media="(prefers-color-scheme: dark)"/><img class="formulaInl" alt="$\vec{G}$" src="form_0.png" width="10" height="13"/></picture>) of reference to the body frame ( <picture><source srcset="form_1_dark.png" media="(prefers-color-scheme: dark)"/><img class="formulaInl" alt="$\vec{B}$" src="form_1.png" width="10" height="13"/></picture>) applies intrinsic rotations in the order:</p><ul>
@@ -259,10 +260,7 @@ Mapping Ground to Body</h3>
 <picture><source srcset="form_5_dark.png" media="(prefers-color-scheme: dark)"/><img class="formulaDsp" alt="\[  \vec{B} = R_x(\phi)R_y(\theta)R_z(\psi)\vec{G}
 \]" src="form_5.png" width="135" height="16"/></picture>
 </p>
-<p> This is the effect we want to reverse. In other words, we need to define a mapping from the body frame to the ground frame. To do so, we can simply</p><ul>
-<li>Reverse the order of the applied rotations (start with roll).</li>
-<li>Flip the angle's sign (to inverse the rotation).</li>
-</ul>
+<p> This is the effect we want to reverse. In other words, we need to define a mapping from the body frame to the ground frame. To do so, we can simply reverse the transformations we did and apply them in the opposite order: we did +yaw, +pitch, then +roll, so to revert, we do -roll, -pitch, then -yaw (imagine it in your head).</p>
 <p>The original mapping looks like this.  
   <div style="text-align: center;">
     <img src="oldTr.png" alt="3-2-1 Rotation Linear transformation from frame to body" style="max-width:90%; height:auto;">

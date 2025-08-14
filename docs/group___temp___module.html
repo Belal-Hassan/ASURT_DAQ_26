@@ -203,7 +203,9 @@ Moving Average Logic</h2>
 I²C Addressing</h2>
 <p>The I²C address of each sensor is calculated as: </p><div class="fragment"><div class="line">SENSOR_ADDRESS = BASE_ADDRESS + (SENSOR_INDEX * ADDRESS_SPACING)</div>
 </div><!-- fragment --><p> This allows multiple identical devices to coexist on the same I²C bus by assigning each a unique address offset.</p>
-<dl class="section attention"><dt>Attention</dt><dd>When configuring I²C in STM32 HAL, the address passed to HAL functions is usually the <b>7-bit address</b>, not shifted. You should shift it manually.</dd></dl>
+<dl class="section attention"><dt>Attention</dt><dd>you'll need to manually assign I²C addresses to each of the 3 new temperature sensors by writing to the slave address register in the EEPROM. This must be done with one sensor at a time to prevent conflicts. Don't forget to make the addresses evenly spaced by <span class="tt">TEMP_I2C_ADDRESS_SPACING</span> and edit the <span class="tt">TEMP_I2C_BASE_ADDRESS</span> if the least address changed.</dd>
+<dd>
+When configuring I²C in STM32 HAL, the address passed to HAL functions is usually the <b>7-bit address</b>, not shifted. You should shift it manually (I already did so in <span class="tt"> <a class="el" href="#ga7878e3a4887bd9dc9f771a896821177a" title="Reads raw temperature data from a specific sensor.">Temp_ReadRaw()</a></span>).</dd></dl>
 <a name="doc-enum-members" id="doc-enum-members"></a><h2 id="header-doc-enum-members" class="groupheader">Enumeration Type Documentation</h2>
 <a id="ga5fb13c0a1c2924d94a37937028808c1a" name="ga5fb13c0a1c2924d94a37937028808c1a"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ga5fb13c0a1c2924d94a37937028808c1a">&#9670;&#160;</a></span>temp_wheels_t</h2>
