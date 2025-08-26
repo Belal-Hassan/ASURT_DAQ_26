@@ -51,7 +51,7 @@
   });
   console.log(`Mermaid initialized for ${isDarkMode ? 'DARK' : 'LIGHT'} mode`);
 </script>
-<script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.min.js"></script>
 <div id="top"><!-- do not remove this div, it is closed by doxygen! -->
 <div id="titlearea">
 <table cellspacing="0" cellpadding="0">
@@ -138,9 +138,6 @@ Macros</h2></td></tr>
 #define&#160;</td><td class="memItemRight" valign="bottom"><b>configGENERATE_RUN_TIME_STATS</b>&#160;&#160;&#160;1</td></tr>
 <tr class="memitem:ga727939bcdb98501e0eba0ec8a1841e1b" id="r_ga727939bcdb98501e0eba0ec8a1841e1b"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ga727939bcdb98501e0eba0ec8a1841e1b">portCONFIGURE_TIMER_FOR_RUN_TIME_STATS</a>()</td></tr>
 <tr class="memitem:gaa7cb8c79fb40bf2d4caccf5ba9ae6737" id="r_gaa7cb8c79fb40bf2d4caccf5ba9ae6737"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#gaa7cb8c79fb40bf2d4caccf5ba9ae6737">portGET_RUN_TIME_COUNTER_VALUE</a>()</td></tr>
-<tr class="memitem:ga7a9a4ef211c3e219a57a7c12dff5e24f" id="r_ga7a9a4ef211c3e219a57a7c12dff5e24f"><td class="memItemLeft" align="right" valign="top"><a id="ga7a9a4ef211c3e219a57a7c12dff5e24f" name="ga7a9a4ef211c3e219a57a7c12dff5e24f"></a>
-#define&#160;</td><td class="memItemRight" valign="bottom"><b>DAQ_TRACE_RECORDER</b></td></tr>
-<tr class="memdesc:ga7a9a4ef211c3e219a57a7c12dff5e24f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Defining it enables trace recording. <br /></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 id="header-func-members" class="groupheader"><a id="func-members" name="func-members"></a>
 Functions</h2></td></tr>
@@ -156,7 +153,7 @@ Functions</h2></td></tr>
 <a name="details" id="details"></a><h2 id="header-details" class="groupheader">Detailed Description</h2>
 <p>Snapshot statistics and trace recording system.</p>
 <p>This module uses the Cortex-M DWT cycle counter to collect CPU runtime statistics, and controls trace recording for debugging and performance analysis. It runs a dedicated FreeRTOS task to periodically manage trace snapshots and error handling. </p>
-<p>The functionality is enabled by defining <a class="el" href="#ga7a9a4ef211c3e219a57a7c12dff5e24f">DAQ_TRACE_RECORDER</a>. Call <span class="tt"><a class="el" href="#ga58ca737a1cc47e112646d831128d366a" title="Initializes the trace recorder by setting up runtime stats and creating snapshot task.">TraceRecorder_Init()</a></span> during system startup to initialize and start tracing.</p>
+<p>The functionality is enabled by defining DAQ_TRACE_RECORDER. Call <span class="tt"><a class="el" href="#ga58ca737a1cc47e112646d831128d366a" title="Initializes the trace recorder by setting up runtime stats and creating snapshot task.">TraceRecorder_Init()</a></span> during system startup to initialize and start tracing.</p>
 <dl class="section attention"><dt>Attention</dt><dd><ul>
 <li>MX_WWDG_Init must be disabled for the snapshot to be captured properly. The WWDG resets every 110ms, screwing up the snapshot.</li>
 <li>The GDB debugger selected in Tracealzyer 4 must be the one used by STM32CubeIDE, and you should start a debugging session to read a snapshot.</li>

@@ -29,11 +29,10 @@ var searchData=
   ['daq_5fstatus_5fwords_5ft_26',['daq_status_words_t',['../structdaq__status__words__t.html',1,'']]],
   ['daq_5ftask_5ffault_5fhandler_27',['DAQ_Task_Fault_Handler',['../group___fault___module.html#ga772d0288b9962458e3b7897138422188',1,'DAQ_Task_Fault_Handler(void):&#160;DAQ.c'],['../group___fault___module.html#ga772d0288b9962458e3b7897138422188',1,'DAQ_Task_Fault_Handler(void):&#160;DAQ.c']]],
   ['daq_5ftimestamp_5ft_28',['daq_timestamp_t',['../structdaq__timestamp__t.html',1,'']]],
-  ['daq_5ftrace_5frecorder_29',['DAQ_TRACE_RECORDER',['../group___trace___module.html#ga7a9a4ef211c3e219a57a7c12dff5e24f',1,'DAQ_Config.h']]],
-  ['daq_5fwwdg_5ftask_30',['DAQ_WWDG_Task',['../group___fault___module.html#ga3f5abf6852b09b78aeaa4ed3856fb3fc',1,'DAQ_WWDG_Task(void *pvParameters):&#160;DAQ.c'],['../group___fault___module.html#ga3f5abf6852b09b78aeaa4ed3856fb3fc',1,'DAQ_WWDG_Task(void *pvParameters):&#160;DAQ.c']]],
-  ['data_31',['data',['../structdaq__can__msg__t.html#a639f446a30e61eb1a4683c520c5308db',1,'daq_can_msg_t::data'],['../structtemp__sensor__data__t.html#a19529b99de21c79e10205630b2b7f907',1,'temp_sensor_data_t::data']]],
-  ['decoding_20algorithm_32',['Encoded &amp;amp; Decoding Algorithm',['../group___c_a_n___module.html#autotoc_md5',1,'']]],
-  ['design_20rationale_33',['Design Rationale',['../group___fault___module.html#autotoc_md8',1,'']]],
-  ['detection_34',['Faulty Task Detection',['../group___fault___module.html#autotoc_md7',1,'']]],
-  ['detection_20group_35',['Fault Logging/Detection Group',['../group___fault___module.html',1,'']]]
+  ['daq_5fwwdg_5ftask_29',['DAQ_WWDG_Task',['../group___fault___module.html#ga3f5abf6852b09b78aeaa4ed3856fb3fc',1,'DAQ_WWDG_Task(void *pvParameters):&#160;DAQ.c'],['../group___fault___module.html#ga3f5abf6852b09b78aeaa4ed3856fb3fc',1,'DAQ_WWDG_Task(void *pvParameters):&#160;DAQ.c']]],
+  ['data_30',['data',['../structdaq__can__msg__t.html#a639f446a30e61eb1a4683c520c5308db',1,'daq_can_msg_t::data'],['../structtemp__sensor__data__t.html#a19529b99de21c79e10205630b2b7f907',1,'temp_sensor_data_t::data']]],
+  ['decoding_20algorithm_31',['Encoded &amp;amp; Decoding Algorithm',['../group___c_a_n___module.html#autotoc_md5',1,'']]],
+  ['design_20rationale_32',['Design Rationale',['../group___fault___module.html#autotoc_md8',1,'']]],
+  ['detection_33',['Faulty Task Detection',['../group___fault___module.html#autotoc_md7',1,'']]],
+  ['detection_20group_34',['Fault Logging/Detection Group',['../group___fault___module.html',1,'']]]
 ];

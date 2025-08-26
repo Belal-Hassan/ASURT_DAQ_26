@@ -1,6 +1,5 @@
 var NAVTREEINDEX1 =
 {
-"structtask__stats__t.html#a8350f383d5bb4fc3bfbc85c468dffa7d":[0,3,2,5],
 "structtask__stats__t.html#a898331c69684da33058d58bc402c2023":[0,3,2,1],
 "structtask__stats__t.html#ade0672ef2d0bbae5f66d44b85b9c3c92":[0,3,2,0],
 "structtemp__reading__buffer__t.html":[0,6,2],
