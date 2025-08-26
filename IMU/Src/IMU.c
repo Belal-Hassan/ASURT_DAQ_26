@@ -115,12 +115,12 @@ void IMU_Eulers_Apply_Offset(imu_vector_t* angles)
 void IMU_Transform_Accels(imu_vector_t* accels)
 {
 	// Calculated once at the beginning of the program.
-	static float cosx = cos(IMU_EULER_ANGLE_OFFSET_X);
-	static float cosy = cos(IMU_EULER_ANGLE_OFFSET_Y);
-	static float sinx = sin(IMU_EULER_ANGLE_OFFSET_X);
-	static float siny = sin(IMU_EULER_ANGLE_OFFSET_Y);
+	static const float cosx = cos(IMU_EULER_ANGLE_OFFSET_X);
+	static const float cosy = cos(IMU_EULER_ANGLE_OFFSET_Y);
+	static const float sinx = sin(IMU_EULER_ANGLE_OFFSET_X);
+	static const float siny = sin(IMU_EULER_ANGLE_OFFSET_Y);
 
-	// Store initial readings because there's more than 1 edit operation.
+	// Store initial readings because there's more than 1 edit operations.
 	float x_old = accels->x, y_old = accels->y, z_old = accels->z;
 
 	// Apply the linear transformation (See the documentation for details).

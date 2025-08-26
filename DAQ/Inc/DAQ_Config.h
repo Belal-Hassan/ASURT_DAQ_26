@@ -31,7 +31,7 @@
 /**
  * @brief Defining it enables trace recording.
  */
-#define DAQ_TRACE_RECORDER // Comment if tracing is not used.
+//#define DAQ_TRACE_RECORDER // Comment if tracing is not used.
 /** @}*/
 
 /*=========================== DAQ Minimum Changes ===========================*/

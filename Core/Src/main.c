@@ -202,6 +202,7 @@ int main(void)
   MX_WWDG_Init();
   MX_UART4_Init();
   MX_UART5_Init();
+  MX_ADC3_Init();
   /* USER CODE BEGIN 2 */
   g_i2c_mutex  = xSemaphoreCreateMutex();
   if (g_i2c_mutex == NULL)
