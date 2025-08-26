@@ -34,7 +34,12 @@ Upon reboot:
 - Other tasks resume normal operation.
 
 The following figure shows the flow in detail.
-@mermaid{fault1}
+
+\htmlonly
+  <div style="text-align: center;">
+    <img src="fault1.svg" alt="A sequence diagram describing the fault detection process" style="max-width:90%; height:auto;">
+  </div>
+\endhtmlonly
 
 ### Design Rationale
 - **Higher-to-lower priority scan:** Faults in high-priority tasks can starve lower-priority tasks of CPU time. By checking high-priority ones first, we catch the root cause early instead of misidentifying a stalled low-priority task that was only blocked, not faulty.
@@ -66,7 +71,12 @@ When a fault exception occurs:
 
 Backup SRAM provides non-volatile memory area preserved through resets to store fault logs and system state:
 
-@mermaid{sram_layout}
+\htmlonly
+  <div style="text-align: center;">
+    <img src="sram.svg" alt="BKPSRAM Fault Log Memory Layout" style="max-width:80%; height:auto;">
+  </div>
+\endhtmlonly
+
 @note The hexadecimal numbers in the diagram refer to the offset from the `DAQ_BKPSRAM_BASE_ADDR`
 
 - The **initialization word** reflects the BKPSRAM state, represented by `daq_bkpsram_state_t`.

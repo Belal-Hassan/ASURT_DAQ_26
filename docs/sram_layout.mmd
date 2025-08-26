@@ -1,0 +1,9 @@
+graph LR
+    A["Init Word<br/>(0x00 - 0x03)"]:::sec1
+    B["Log Status<br/>(0x04 - 0x07)"]:::sec2
+    C["Current Fault Log<br/>(0x08 - 0x3B)"]:::sec3
+    D["Previous Fault Log<br/>(0x3C - 0x6F)"]:::sec4
+
+    A --- B --- C --- D
+
+    

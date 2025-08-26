@@ -21,36 +21,6 @@
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300&family=Roboto:wght@400&family=Roboto:wght@500&display=swap" rel="stylesheet">
 </head>
 <body>
-<script type="module">
-  // Load Mermaid first (MUST be in header)
-  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
-  // DARK MODE DETECTION (critical for Doxygen)
-  const isDarkMode = 
-    document.documentElement.classList.contains('dark') || 
-    window.matchMedia('(prefers-color-scheme: dark)').matches;
-  // ENHANCED THEME CONFIGURATION (with TEXT COLOR FIX)
-  mermaid.initialize({
-    startOnLoad: true,
-    securityLevel: 'loose',
-    theme: 'base',
-    themeVariables: {
-      // Keep your existing colors
-      primaryColor: '#f4f4ff',
-      secondaryColor: 'rgba(244,244,255,0.9)',
-      tertiaryColor: '#F9FAFC',
-      // CRITICAL TEXT COLOR FIXES (missing in your config)
-      primaryTextColor: isDarkMode ? '#e0e0e0' : '#000',
-      lineColor: isDarkMode ? '#707070' : '#666',
-      edgeLabelBackground: isDarkMode ? '#3a3a3a' : '#fff',
-      // SEQUENCE DIAGRAM SPECIFICS
-      actorBkg: isDarkMode ? '#3a3a3a' : '#e6f2ff',
-      actorBorder: isDarkMode ? '#888' : '#216fda',
-      noteBkg: isDarkMode ? '#4a4a4a' : '#eef4ff',
-      noteBorderColor: isDarkMode ? '#707070' : '#216fda'
-    }
-  });
-  console.log(`Mermaid initialized for ${isDarkMode ? 'DARK' : 'LIGHT'} mode`);
-</script>
 <script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.min.js"></script>
 <div id="top"><!-- do not remove this div, it is closed by doxygen! -->
 <div id="titlearea">
@@ -246,9 +216,12 @@ Faulty Task Detection</h2>
 <li>Tasks with error counts ≥ <span class="tt">DAQ_MAX_ERROR_COUNT</span> are demoted to the lowest priority to mitigate faults.</li>
 <li>Other tasks resume normal operation.</li>
 </ul>
-<p>The following figure shows the flow in detail.  <div class="mermaid"> 
-    
- </div> </p>
+<p>The following figure shows the flow in detail.</p>
+<p> 
+  <div style="text-align: center;">
+    <img src="fault1.svg" alt="A sequence diagram describing the fault detection process" style="max-width:90%; height:auto;">
+  </div>
+</p>
 <h3 class="doxsection"><a class="anchor" id="autotoc_md8"></a>
 Design Rationale</h3>
 <ul>
@@ -279,9 +252,12 @@ General Fault Logging Flow</h2>
 <h2 class="doxsection"><a class="anchor" id="autotoc_md12"></a>
 Backup SRAM Usage</h2>
 <p>Backup SRAM provides non-volatile memory area preserved through resets to store fault logs and system state:</p>
-<p> <div class="mermaid"> 
-    
- </div>  </p><dl class="section note"><dt>Note</dt><dd>The hexadecimal numbers in the diagram refer to the offset from the <span class="tt">DAQ_BKPSRAM_BASE_ADDR</span></dd></dl>
+<p> 
+  <div style="text-align: center;">
+    <img src="sram.svg" alt="BKPSRAM Fault Log Memory Layout" style="max-width:80%; height:auto;">
+  </div>
+</p>
+<dl class="section note"><dt>Note</dt><dd>The hexadecimal numbers in the diagram refer to the offset from the <span class="tt">DAQ_BKPSRAM_BASE_ADDR</span></dd></dl>
 <ul>
 <li>The <b>initialization word</b> reflects the BKPSRAM state, represented by <span class="tt"><a class="el" href="#gac76fc28934ab77d9f0feede01defa34e" title="Backup SRAM states.">daq_bkpsram_state_t</a></span>.</li>
 <li>The <b>log status word</b> indicates the fault log state, using <span class="tt"><a class="el" href="#gaeb992aae8d3b7f887ab1a8370b4c6a20" title="Fault Logging statuses.">daq_log_status_t</a></span>.</li>
