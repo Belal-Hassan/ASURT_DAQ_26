@@ -24,6 +24,41 @@ $mathjax
 $extrastylesheet
 </head>
 <body>
+<script type="module">
+  // Load Mermaid first (MUST be in header)
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+  
+  // DARK MODE DETECTION (critical for Doxygen)
+  const isDarkMode = 
+    document.documentElement.classList.contains('dark') || 
+    window.matchMedia('(prefers-color-scheme: dark)').matches;
+  
+  // ENHANCED THEME CONFIGURATION (with TEXT COLOR FIX)
+  mermaid.initialize({
+    startOnLoad: true,
+    securityLevel: 'loose',
+    theme: 'base',
+    themeVariables: {
+      // Keep your existing colors
+      primaryColor: '#f4f4ff',
+      secondaryColor: 'rgba(244,244,255,0.9)',
+      tertiaryColor: '#F9FAFC',
+      
+      // CRITICAL TEXT COLOR FIXES (missing in your config)
+      primaryTextColor: isDarkMode ? '#e0e0e0' : '#000',
+      lineColor: isDarkMode ? '#707070' : '#666',
+      edgeLabelBackground: isDarkMode ? '#3a3a3a' : '#fff',
+      
+      // SEQUENCE DIAGRAM SPECIFICS
+      actorBkg: isDarkMode ? '#3a3a3a' : '#e6f2ff',
+      actorBorder: isDarkMode ? '#888' : '#216fda',
+      noteBkg: isDarkMode ? '#4a4a4a' : '#eef4ff',
+      noteBorderColor: isDarkMode ? '#707070' : '#216fda'
+    }
+  });
+  
+  console.log(`Mermaid initialized for ${isDarkMode ? 'DARK' : 'LIGHT'} mode`);
+</script>
 <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
 <!--BEGIN DISABLE_INDEX-->
   <!--BEGIN FULL_SIDEBAR-->
