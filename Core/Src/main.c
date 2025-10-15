@@ -217,7 +217,7 @@ int main(void)
   DAQ_CAN_Init(&hcan1, &can_tx_header);
 
   DAQ_FaultLog_Init();
-  g_fault_log_buffer = DAQ_FaultLog_Read();
+  DAQ_FaultLog_Read(&g_fault_log_buffer);
 
   if(g_fault_log_buffer.current.reset_reason > DAQ_RESET_REASON_MIN &&
 	 g_fault_log_buffer.current.reset_reason < DAQ_RESET_REASON_MAX)
@@ -395,7 +395,7 @@ void Error_Handler(void)
   log.reset_reason = DAQ_RESET_REASON_ERRORHANDLER;
   log.task_records = g_daq_fault_record;
   log.timestamp = g_timestamp;
-  DAQ_FaultLog_Write(log);
+  DAQ_FaultLog_Write(&log);
   while (1)
   {
   }

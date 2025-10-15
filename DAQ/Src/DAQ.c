@@ -106,28 +106,26 @@ BaseType_t DAQ_CAN_Msg_Dequeue(daq_can_msg_t* msg)
 {
     return xQueueReceive(daq_can_queue, msg, DAQ_CAN_MAX_WAIT_TICKS);
 }
-daq_fault_log_buffer_t DAQ_FaultLog_Read(void)
+void DAQ_FaultLog_Read(daq_fault_log_buffer_t* log)
 {
-	daq_fault_log_buffer_t log = {0};
 	daq_status_words_t status = {0};
-	DAQ_BKPSRAM_Read(&log.prev, DAQ_READ_PREVIOUS_LOG);
+	DAQ_BKPSRAM_Read(&(log->prev), DAQ_READ_PREVIOUS_LOG);
 	DAQ_BKPSRAM_Read(&status, DAQ_READ_STATUS_WORDS);
 	if(status.bkpsram_state == DAQ_BKPSRAM_INITIALIZED && status.log_status == DAQ_FAULT_LOGGED)
 	{
-		DAQ_BKPSRAM_Read(&log.current, DAQ_READ_CURRENT_LOG);
+		DAQ_BKPSRAM_Read(&(log->current), DAQ_READ_CURRENT_LOG);
 		DAQ_BKPSRAM_Write(NULL, DAQ_CLEAR_CURRENT_LOG);
 		status.log_status = DAQ_FAULT_READ;
 		DAQ_BKPSRAM_Write(&status, DAQ_WRITE_LOG_STATUS);
 	}
-	return log;
 }
-void DAQ_FaultLog_Write(fault_log_t log)
+void DAQ_FaultLog_Write(fault_log_t* log)
 {
 	daq_status_words_t status = {0};
 	DAQ_BKPSRAM_Read(&status, DAQ_READ_STATUS_WORDS);
 	if(status.bkpsram_state == DAQ_BKPSRAM_INITIALIZED)
 	{
-		DAQ_BKPSRAM_Write(&log, DAQ_WRITE_LOG);
+		DAQ_BKPSRAM_Write(log, DAQ_WRITE_LOG);
 		status.bkpsram_state = DAQ_BKPSRAM_UNINITIALIZED;
 		status.log_status = DAQ_FAULT_LOGGED;
 		DAQ_BKPSRAM_Write(&status, DAQ_WRITE_BKPSRAM_STATE);
@@ -199,7 +197,7 @@ void DAQ_Task_Fault_Handler(void)
 	log.reset_reason = DAQ_RESET_REASON_TASKFAULTHANDLER;
 	log.task_records = g_daq_fault_record;
 	log.timestamp = g_timestamp;
-	DAQ_FaultLog_Write(log);
+	DAQ_FaultLog_Write(&log);
 	for(;;);
 }
 void DAQ_Fault_Blink(void *pvParameters)

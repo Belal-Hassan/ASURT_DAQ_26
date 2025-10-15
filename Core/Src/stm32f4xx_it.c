@@ -103,7 +103,7 @@ void HardFault_Handler(void)
 	log.fault_status = SCB->HFSR;
 	log.task_records = g_daq_fault_record;
 	log.timestamp = g_timestamp;
-	DAQ_FaultLog_Write(log);
+	DAQ_FaultLog_Write(&log);
   /* USER CODE END HardFault_IRQn 0 */
   while (1)
   {
@@ -126,7 +126,7 @@ void MemManage_Handler(void)
 	log.fault_address = SCB->MMFAR;
 	log.task_records = g_daq_fault_record;
 	log.timestamp = g_timestamp;
-	DAQ_FaultLog_Write(log);
+	DAQ_FaultLog_Write(&log);
   /* USER CODE END MemoryManagement_IRQn 0 */
   while (1)
   {
@@ -149,7 +149,7 @@ void BusFault_Handler(void)
 	log.fault_address = SCB->BFAR;
 	log.task_records = g_daq_fault_record;
 	log.timestamp = g_timestamp;
-	DAQ_FaultLog_Write(log);
+	DAQ_FaultLog_Write(&log);
   /* USER CODE END BusFault_IRQn 0 */
   while (1)
   {
@@ -171,7 +171,7 @@ void UsageFault_Handler(void)
 	log.fault_status = SCB->CFSR & 0xFFFF0000;
 	log.task_records = g_daq_fault_record;
 	log.timestamp = g_timestamp;
-	DAQ_FaultLog_Write(log);
+	DAQ_FaultLog_Write(&log);
   /* USER CODE END UsageFault_IRQn 0 */
   while (1)
   {

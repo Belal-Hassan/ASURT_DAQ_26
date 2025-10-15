@@ -97,8 +97,8 @@ typedef enum{
  */
 typedef enum{
 	DAQ_RESET_REASON_NONE = 0,
-	DAQ_RESET_REASON_MIN,
-	DAQ_RESET_REASON_HARDFAULT = 7,
+	DAQ_RESET_REASON_MIN = 6,
+	DAQ_RESET_REASON_HARDFAULT,
 	DAQ_RESET_REASON_MEMMANAGE,
 	DAQ_RESET_REASON_BUSFAULT,
 	DAQ_RESET_REASON_USAGEFAULT,
@@ -191,19 +191,19 @@ typedef struct{
 void DAQ_FaultLog_Init(void);
 /**
  * @brief Reads the previous and current fault logs from the backup SRAM.
- * @return The read fault log buffer.
+ * @param a pointer to the log fault buffer to write the fault log in.
  *
  * @note After the function successfully reads the current fault log, it
  * clears it so as not to be redundantly read again.
  */
-daq_fault_log_buffer_t DAQ_FaultLog_Read(void);
+void DAQ_FaultLog_Read(daq_fault_log_buffer_t* log);
 /**
  * @brief Writes the received fault log as the current and previous fault logs on the backup SRAM.
- * @param log the log to be written.
+ * @param a pointer to the log to be written.
  *
  * The function writes the log 2 times, one on the current, and the other on the previous.
  */
-void DAQ_FaultLog_Write(fault_log_t log);
+void DAQ_FaultLog_Write(fault_log_t* log);
 /**
  * @brief An RTOS task responsible for checking up on the system and catching errors.
  *
