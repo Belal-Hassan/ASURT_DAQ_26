@@ -32,8 +32,8 @@ var group___fault___module =
     [ "DAQ_BKPSRAM_Write", "group___fault___module.html#gad80bd5c4208a1a8ce5804a9a5c86debe", null ],
     [ "DAQ_Fault_Blink", "group___fault___module.html#ga5af76f0d3237de013b03c3c05ab11ce6", null ],
     [ "DAQ_FaultLog_Init", "group___fault___module.html#ga4ba22cd346be6422e7b81dcd19a8623b", null ],
-    [ "DAQ_FaultLog_Read", "group___fault___module.html#ga7097ee512a9ae68b003075a28a2041ec", null ],
-    [ "DAQ_FaultLog_Write", "group___fault___module.html#ga09957557792e94ebc9b7968d201d329c", null ],
+    [ "DAQ_FaultLog_Read", "group___fault___module.html#ga5fbfc3d180b59e093406c100904c0835", null ],
+    [ "DAQ_FaultLog_Write", "group___fault___module.html#gae4d3ba8cd33d9e1f854ae35c009fbb4c", null ],
     [ "DAQ_Task_Fault_Handler", "group___fault___module.html#ga772d0288b9962458e3b7897138422188", null ],
     [ "DAQ_WWDG_Task", "group___fault___module.html#ga3f5abf6852b09b78aeaa4ed3856fb3fc", null ]
 ];

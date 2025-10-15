@@ -125,8 +125,8 @@ Enumerations</h2></td></tr>
 <tr class="memdesc:gaeb992aae8d3b7f887ab1a8370b4c6a20"><td class="mdescLeft">&#160;</td><td class="mdescRight">Fault Logging statuses.  <a href="#gaeb992aae8d3b7f887ab1a8370b4c6a20">More...</a><br /></td></tr>
 <tr class="memitem:gad60ad9f3e20274902047188f756cf427" id="r_gad60ad9f3e20274902047188f756cf427"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#gad60ad9f3e20274902047188f756cf427">daq_reset_reason_t</a> { <br />
 &#160;&#160;<b>DAQ_RESET_REASON_NONE</b> = 0
-, <b>DAQ_RESET_REASON_MIN</b>
-, <b>DAQ_RESET_REASON_HARDFAULT</b> = 7
+, <b>DAQ_RESET_REASON_MIN</b> = 6
+, <b>DAQ_RESET_REASON_HARDFAULT</b>
 , <b>DAQ_RESET_REASON_MEMMANAGE</b>
 , <br />
 &#160;&#160;<b>DAQ_RESET_REASON_BUSFAULT</b>
@@ -165,10 +165,10 @@ Functions</h2></td></tr>
 <tr class="memitem:ga4ba22cd346be6422e7b81dcd19a8623b" id="r_ga4ba22cd346be6422e7b81dcd19a8623b"><td class="memItemLeft" align="right" valign="top"><a id="ga4ba22cd346be6422e7b81dcd19a8623b" name="ga4ba22cd346be6422e7b81dcd19a8623b"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>DAQ_FaultLog_Init</b> (void)</td></tr>
 <tr class="memdesc:ga4ba22cd346be6422e7b81dcd19a8623b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Initializes the backup SRAM and Fault Handlers. <br /></td></tr>
-<tr class="memitem:ga7097ee512a9ae68b003075a28a2041ec" id="r_ga7097ee512a9ae68b003075a28a2041ec"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structdaq__fault__log__buffer__t.html">daq_fault_log_buffer_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ga7097ee512a9ae68b003075a28a2041ec">DAQ_FaultLog_Read</a> (void)</td></tr>
-<tr class="memdesc:ga7097ee512a9ae68b003075a28a2041ec"><td class="mdescLeft">&#160;</td><td class="mdescRight">Reads the previous and current fault logs from the backup SRAM.  <br /></td></tr>
-<tr class="memitem:ga09957557792e94ebc9b7968d201d329c" id="r_ga09957557792e94ebc9b7968d201d329c"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ga09957557792e94ebc9b7968d201d329c">DAQ_FaultLog_Write</a> (<a class="el" href="structfault__log__t.html">fault_log_t</a> log)</td></tr>
-<tr class="memdesc:ga09957557792e94ebc9b7968d201d329c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Writes the received fault log as the current and previous fault logs on the backup SRAM.  <br /></td></tr>
+<tr class="memitem:ga5fbfc3d180b59e093406c100904c0835" id="r_ga5fbfc3d180b59e093406c100904c0835"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ga5fbfc3d180b59e093406c100904c0835">DAQ_FaultLog_Read</a> (<a class="el" href="structdaq__fault__log__buffer__t.html">daq_fault_log_buffer_t</a> *log)</td></tr>
+<tr class="memdesc:ga5fbfc3d180b59e093406c100904c0835"><td class="mdescLeft">&#160;</td><td class="mdescRight">Reads the previous and current fault logs from the backup SRAM.  <br /></td></tr>
+<tr class="memitem:gae4d3ba8cd33d9e1f854ae35c009fbb4c" id="r_gae4d3ba8cd33d9e1f854ae35c009fbb4c"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#gae4d3ba8cd33d9e1f854ae35c009fbb4c">DAQ_FaultLog_Write</a> (<a class="el" href="structfault__log__t.html">fault_log_t</a> *log)</td></tr>
+<tr class="memdesc:gae4d3ba8cd33d9e1f854ae35c009fbb4c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Writes the received fault log as the current and previous fault logs on the backup SRAM.  <br /></td></tr>
 <tr class="memitem:ga3f5abf6852b09b78aeaa4ed3856fb3fc" id="r_ga3f5abf6852b09b78aeaa4ed3856fb3fc"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ga3f5abf6852b09b78aeaa4ed3856fb3fc">DAQ_WWDG_Task</a> (void *pvParameters)</td></tr>
 <tr class="memdesc:ga3f5abf6852b09b78aeaa4ed3856fb3fc"><td class="mdescLeft">&#160;</td><td class="mdescRight">An RTOS task responsible for checking up on the system and catching errors.  <br /></td></tr>
 <tr class="memitem:ga772d0288b9962458e3b7897138422188" id="r_ga772d0288b9962458e3b7897138422188"><td class="memItemLeft" align="right" valign="top"><a id="ga772d0288b9962458e3b7897138422188" name="ga772d0288b9962458e3b7897138422188"></a>
@@ -244,9 +244,9 @@ General Fault Logging Flow</h2>
 <li>System timestamp (<span class="tt">g_timestamp</span>).</li>
 </ul>
 </li>
-<li>Persist the fault log to backup memory via <a class="el" href="#ga09957557792e94ebc9b7968d201d329c">DAQ_FaultLog_Write()</a>, guaranteeing log retention across resets.</li>
+<li>Persist the fault log to backup memory via <a class="el" href="#gae4d3ba8cd33d9e1f854ae35c009fbb4c">DAQ_FaultLog_Write()</a>, guaranteeing log retention across resets.</li>
 <li>Enter an infinite loop to halt execution until the WWDG triggers a system reset.</li>
-<li>After reset, retrieve the fault log from backup SRAM using <a class="el" href="#ga7097ee512a9ae68b003075a28a2041ec">DAQ_FaultLog_Read()</a>, clear the current log, and signal fault presence (e.g., <a class="el" href="#ga5af76f0d3237de013b03c3c05ab11ce6">DAQ_Fault_Blink()</a>).</li>
+<li>After reset, retrieve the fault log from backup SRAM using <a class="el" href="#ga5fbfc3d180b59e093406c100904c0835">DAQ_FaultLog_Read()</a>, clear the current log, and signal fault presence (e.g., <a class="el" href="#ga5af76f0d3237de013b03c3c05ab11ce6">DAQ_Fault_Blink()</a>).</li>
 </ol>
 <hr  />
 <h2 class="doxsection"><a class="anchor" id="autotoc_md12"></a>
@@ -267,7 +267,7 @@ Backup SRAM Usage</h2>
 </ul>
 </li>
 <li>On system restart:<ul>
-<li>If the BKPSRAM state is <span class="tt">DAQ_BKPSRAM_INITIALIZED</span> and the log status is <span class="tt">DAQ_FAULT_LOGGED</span>, the current log is read and returned by <a class="el" href="#ga7097ee512a9ae68b003075a28a2041ec">DAQ_FaultLog_Read()</a>.</li>
+<li>If the BKPSRAM state is <span class="tt">DAQ_BKPSRAM_INITIALIZED</span> and the log status is <span class="tt">DAQ_FAULT_LOGGED</span>, the current log is read and returned by <a class="el" href="#ga5fbfc3d180b59e093406c100904c0835">DAQ_FaultLog_Read()</a>.</li>
 <li>The current log is then cleared to prevent redundaunt warning task triggering, and log status updated to <span class="tt">DAQ_FAULT_READ</span>.</li>
 <li>The previous log remains intact for manual analysis.</li>
 </ul>
@@ -396,29 +396,34 @@ Suggested Future Improvements</h2>
 
 </div>
 </div>
-<a id="ga7097ee512a9ae68b003075a28a2041ec" name="ga7097ee512a9ae68b003075a28a2041ec"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ga7097ee512a9ae68b003075a28a2041ec">&#9670;&#160;</a></span>DAQ_FaultLog_Read()</h2>
+<a id="ga5fbfc3d180b59e093406c100904c0835" name="ga5fbfc3d180b59e093406c100904c0835"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ga5fbfc3d180b59e093406c100904c0835">&#9670;&#160;</a></span>DAQ_FaultLog_Read()</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="structdaq__fault__log__buffer__t.html">daq_fault_log_buffer_t</a> DAQ_FaultLog_Read </td>
+          <td class="memname">void DAQ_FaultLog_Read </td>
           <td>(</td>
-          <td class="paramtype">void</td>          <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
+          <td class="paramtype"><a class="el" href="structdaq__fault__log__buffer__t.html">daq_fault_log_buffer_t</a> *</td>          <td class="paramname"><span class="paramname"><em>log</em></span></td><td>)</td>
           <td></td>
         </tr>
       </table>
 </div><div class="memdoc">
 
 <p>Reads the previous and current fault logs from the backup SRAM. </p>
-<dl class="section return"><dt>Returns</dt><dd>The read fault log buffer.</dd></dl>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">a</td><td>pointer to the log fault buffer to write the fault log in.</td></tr>
+  </table>
+  </dd>
+</dl>
 <dl class="section note"><dt>Note</dt><dd>After the function successfully reads the current fault log, it clears it so as not to be redundantly read again. </dd></dl>
 
 </div>
 </div>
-<a id="ga09957557792e94ebc9b7968d201d329c" name="ga09957557792e94ebc9b7968d201d329c"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ga09957557792e94ebc9b7968d201d329c">&#9670;&#160;</a></span>DAQ_FaultLog_Write()</h2>
+<a id="gae4d3ba8cd33d9e1f854ae35c009fbb4c" name="gae4d3ba8cd33d9e1f854ae35c009fbb4c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#gae4d3ba8cd33d9e1f854ae35c009fbb4c">&#9670;&#160;</a></span>DAQ_FaultLog_Write()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -426,7 +431,7 @@ Suggested Future Improvements</h2>
         <tr>
           <td class="memname">void DAQ_FaultLog_Write </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="structfault__log__t.html">fault_log_t</a></td>          <td class="paramname"><span class="paramname"><em>log</em></span></td><td>)</td>
+          <td class="paramtype"><a class="el" href="structfault__log__t.html">fault_log_t</a> *</td>          <td class="paramname"><span class="paramname"><em>log</em></span></td><td>)</td>
           <td></td>
         </tr>
       </table>
@@ -435,7 +440,7 @@ Suggested Future Improvements</h2>
 <p>Writes the received fault log as the current and previous fault logs on the backup SRAM. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">log</td><td>the log to be written.</td></tr>
+    <tr><td class="paramname">a</td><td>pointer to the log to be written.</td></tr>
   </table>
   </dd>
 </dl>
