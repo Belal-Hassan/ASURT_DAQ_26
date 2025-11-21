@@ -67,8 +67,8 @@ CAN_TxHeaderTypeDef can_tx_header;
 bool g_i2c_dma_flags[DAQ_NO_OF_I2C_DMA_DEVICES];
 daq_i2c_dma_device_t g_i2c_dma_device = I2C_DMA_NO_DEVICE;
 extern daq_fault_record_t g_daq_fault_record;
-extern DMA_HandleTypeDef hdma_tim3_ch1_trig, hdma_tim3_ch2, hdma_tim3_ch3, hdma_tim3_ch4_up;
-DMA_HandleTypeDef *proximity_dma_handlers[4] = {&hdma_tim3_ch1_trig, &hdma_tim3_ch2, &hdma_tim3_ch3, &hdma_tim3_ch4_up};
+extern DMA_HandleTypeDef hdma_tim1_ch1, hdma_tim1_ch2, hdma_tim1_ch3, hdma_tim1_ch4_trig_com;
+DMA_HandleTypeDef *proximity_dma_handlers[4] = {&hdma_tim1_ch1, &hdma_tim1_ch2, &hdma_tim1_ch3, &hdma_tim1_ch4_trig_com};
 
 imu_axis_map_t imu_axis_map = {
   .x = BNO055_AXIS_X,
@@ -198,17 +198,17 @@ int main(void)
   MX_CAN1_Init();
   MX_I2C1_Init();
   MX_SPI1_Init();
-  MX_TIM3_Init();
   MX_WWDG_Init();
   MX_UART4_Init();
   MX_UART5_Init();
   MX_ADC3_Init();
+  MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
   g_i2c_mutex  = xSemaphoreCreateMutex();
   if (g_i2c_mutex == NULL)
 	  Error_Handler();
   ADC_Sensors_Init(&hadc1);
-  Prox_Init(&htim3, proximity_dma_handlers);
+  Prox_Init(&htim1, proximity_dma_handlers);
   IMU_Init(&hi2c1, OPERATION_MODE_NDOF, imu_axis_map);
   GPS_Init(&hi2c1);
   Temp_Init(&hi2c1);
@@ -320,7 +320,7 @@ void SystemClock_Config(void)
   RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
   RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
   RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV4;
-  RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
+  RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV4;
 
   if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_2) != HAL_OK)
   {

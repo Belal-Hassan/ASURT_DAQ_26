@@ -17,7 +17,7 @@ static TIM_HandleTypeDef prox_timer_handle;
 static DMA_HandleTypeDef prox_dma_handles[PROX_NO_OF_WHEELS];
 
 // Direct pointers to timer capture/compare registers for each wheel channel
-static uint32_t timer_counters[PROX_NO_OF_WHEELS] = {&TIM3->CCR1, &TIM3->CCR2, &TIM3->CCR3, &TIM3->CCR4};
+static uint32_t timer_counters[PROX_NO_OF_WHEELS] = {&TIM1->CCR1, &TIM1->CCR2, &TIM1->CCR3, &TIM1->CCR4};
 
 // Shared DAQ fault record structure
 extern daq_fault_record_t g_daq_fault_record;
@@ -25,14 +25,14 @@ extern daq_fault_record_t g_daq_fault_record;
 static inline float Prox_GetTimerFreq(void)
 {
     // Get peripheral clock frequency for APB1 bus
-    float pclk1 = (float)HAL_RCC_GetPCLK1Freq();
+    float pclk2 = (float)HAL_RCC_GetPCLK2Freq();
 
     // Check APB1 prescaler; timer clocks run at double frequency if prescaler != 1
     if ((RCC->CFGR & RCC_CFGR_PPRE1) != RCC_CFGR_PPRE1_DIV1)
-        pclk1 *= 2.0f;
+        pclk2 *= 2.0f;
 
     // Return timer frequency after prescaler division
-    return pclk1 / ((float)TIM3->PSC + 1.0f);
+    return pclk2 / ((float)TIM1->PSC + 1.0f);
 }
 void Prox_Init(TIM_HandleTypeDef *htim, DMA_HandleTypeDef* hdma[PROX_NO_OF_WHEELS])
 {

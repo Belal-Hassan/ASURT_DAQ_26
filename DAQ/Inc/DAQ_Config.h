@@ -18,8 +18,8 @@
 
 #define DAQ_NO_OF_TEMP_SENSORS			1 // Should be 4.
 
-#define DAQ_IMU_RST_GPIO_PORT			GPIOC
-#define DAQ_IMU_RST_PIN					GPIO_PIN_13
+#define DAQ_IMU_RST_GPIO_PORT			GPIOA
+#define DAQ_IMU_RST_PIN					GPIO_PIN_3
 
 #define DAQ_CAN_MAX_WAIT_TICKS 			10 // Max CAN waiting time before at least a message is enqueued.
 

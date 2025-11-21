@@ -72,6 +72,20 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
+#define SUS_Pin GPIO_PIN_0
+#define SUS_GPIO_Port GPIOC
+#define SUSC1_Pin GPIO_PIN_1
+#define SUSC1_GPIO_Port GPIOC
+#define IMU_RST_Pin GPIO_PIN_3
+#define IMU_RST_GPIO_Port GPIOA
+#define SUSA6_Pin GPIO_PIN_6
+#define SUSA6_GPIO_Port GPIOA
+#define SUSA7_Pin GPIO_PIN_7
+#define SUSA7_GPIO_Port GPIOA
+#define PRES_Pin GPIO_PIN_4
+#define PRES_GPIO_Port GPIOC
+#define PRESC5_Pin GPIO_PIN_5
+#define PRESC5_GPIO_Port GPIOC
 
 /* USER CODE BEGIN Private defines */
 
