@@ -150,12 +150,12 @@ typedef struct{
  *
  */
 typedef struct {
-	TickType_t start_tick: 24; /*!< Saves the RTOS tick the task started with (Could be used with any other tick). */
-	uint32_t entry_count: 4; /*!< Counts the number of times a task has been executed till its end. */
-	uint32_t error_count: 3; /*!< Counts the number of errors the task has caused. */
-	uint32_t task_demoted: 1; /*!< Set to 1 if the task was kicked from the system (ie the error count reached `DAQ_MAX_ERROR_COUNT`). */
-	TickType_t end_tick : 24;/*!< Saves the RTOS tick the task ended with (Could be used with any other tick). */
-	TickType_t runtime	: 8; /*!< Holds the time taken for the task to get executed (in ticks). */
+	uint32_t start_tick; /*!< Saves the RTOS tick the task started with (Could be used with any other tick). */
+	uint32_t end_tick;/*!< Saves the RTOS tick the task ended with (Could be used with any other tick). */
+	uint8_t runtime; /*!< Holds the execution time of the task in RTOS ticks. */
+	uint8_t entry_count; /*!< Counts the number of times a task has been executed till its end. */
+	uint8_t error_count; /*!< Counts the number of errors the task has caused. */
+	uint8_t task_demoted; /*!< Set to 1 if the task was kicked from the system (ie the error count reached `DAQ_MAX_ERROR_COUNT`). */
 } task_stats_t;
 /**
  * @brief A struct for each task's stats needed for fault detection and logging.
@@ -168,7 +168,7 @@ typedef struct{
  * @brief Contains all fault info to be logged to or read from the backup SRAM.
  *
  */
-typedef struct PACKED {
+typedef struct {
     uint8_t reset_reason; /*!< One of the reset reasons in `daq_reset_reason_t`. */
     uint8_t fault_status; /*!< Stores the fault status from the register `SCB->CFSR`. */
     uint32_t fault_address; /*!< Stores the fault address from the fault address registers in `SCB`. */
